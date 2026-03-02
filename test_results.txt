@@ -1,0 +1,138 @@
+
+============================================================
+🤖 JANSAHAYAK COMPREHENSIVE TEST SUITE
+============================================================
+
+📁 1. FILE & ENVIRONMENT TESTS
+----------------------------------------
+✅ polling_bot.py exists
+✅ chat.py exists
+✅ documents.py exists
+✅ translations.json exists
+✅ firebase-credentials.json exists
+✅ .env exists
+✅ GROQ_API_KEY set
+✅ TELEGRAM_BOT_TOKEN set
+✅ FIREBASE_CRED set
+
+🔤 2. TRANSLATIONS.JSON TESTS
+----------------------------------------
+✅ All 9 languages present
+✅ Translation values not empty/placeholder
+✅ Telugu scheme names in Telugu script
+✅ Hindi yes button in Hindi
+✅ Error messages present
+✅ Consent text present
+
+🧠 3. CHAT.PY / LLM TESTS
+----------------------------------------
+❌ chat.py imports without error
+   Error: name 'lang' is not defined
+❌ t() function works correctly
+   Error: name 'lang' is not defined
+❌ All keyboards return correct language
+   Error: name 'lang' is not defined
+❌ OPTIONS tag extraction works
+   Error: name 'lang' is not defined
+❌ Language detection works for all scripts
+   Error: name 'lang' is not defined
+❌ Callback resolution works
+   Error: name 'lang' is not defined
+
+📄 4. DOCUMENTS.PY / OCR TESTS
+----------------------------------------
+❌ documents.py imports without error
+   Error: name 'lang' is not defined
+❌ MIME type detection works
+   Error: name 'lang' is not defined
+❌ Aadhaar masking works correctly
+   Error: name 'lang' is not defined
+❌ OCR uses Groq Vision (not Gemini)
+   Error: name 'lang' is not defined
+
+🔌 5. API CONNECTIVITY TESTS
+----------------------------------------
+✅ Groq API key works
+✅ Groq API key 2 is different and works
+   Bot: @JanSahayak_bot
+✅ Telegram bot token valid
+✅ Firebase Firestore connected
+✅ Only ONE bot instance running
+
+🤖 6. BOT LOGIC TESTS
+----------------------------------------
+✅ polling_bot.py has no syntax errors
+✅ polling_bot.py has all required imports
+   Hardcoded strings found: ['"PM-KISAN"', '"Ration Card"', '"Ayushman Bharat"']
+❌ No hardcoded UI strings in chat.py
+✅ System prompt prevents fake submissions
+✅ Old LANGUAGE_CONFIG removed from chat.py
+✅ chat.py loads from translations.json
+
+🔄 7. FLOW LOGIC TESTS
+----------------------------------------
+✅ Returning user detection logic exists
+✅ Mobile confirmation flow exists
+✅ Aadhaar → confirm → submit flow exists
+❌ Eligibility logic: ans_no doesn't wrongly reject
+   Error: name 'lang' is not defined
+✅ Duplicate application check exists
+
+🌐 8. EDGE CASE TESTS
+----------------------------------------
+❌ Phone extraction handles edge cases
+   Error: name 'lang' is not defined
+❌ Invalid Aadhaar handled gracefully
+   Error: name 'lang' is not defined
+❌ Unknown language falls back to English
+   Error: name 'lang' is not defined
+❌ Missing translation key returns key name
+   Error: name 'lang' is not defined
+❌ OPTIONS tag is case-insensitive
+   Error: name 'lang' is not defined
+✅ Phone number formatted as XXXX XXXX XX
+
+🔒 9. SECURITY TESTS
+----------------------------------------
+✅ Aadhaar is masked before storage
+✅ polling_bot uses masked Aadhaar
+✅ PEM key not exposed in app directory
+
+⚡ 10. PERFORMANCE TESTS
+----------------------------------------
+❌ LLM responds within 15 seconds
+   Error: name 'lang' is not defined
+   translations.json load time: 0.2ms
+✅ translations.json loads fast
+
+============================================================
+📊 TEST RESULTS SUMMARY
+============================================================
+
+✅ Passed: 34/52
+❌ Failed: 18/52
+⚠️ Warnings: 0/52
+
+Score: 65%
+
+❌ FAILED TESTS:
+  - chat.py imports without error
+  - t() function works correctly
+  - All keyboards return correct language
+  - OPTIONS tag extraction works
+  - Language detection works for all scripts
+  - Callback resolution works
+  - documents.py imports without error
+  - MIME type detection works
+  - Aadhaar masking works correctly
+  - OCR uses Groq Vision (not Gemini)
+  - No hardcoded UI strings in chat.py
+  - Eligibility logic: ans_no doesn't wrongly reject
+  - Phone extraction handles edge cases
+  - Invalid Aadhaar handled gracefully
+  - Unknown language falls back to English
+  - Missing translation key returns key name
+  - OPTIONS tag is case-insensitive
+  - LLM responds within 15 seconds
+
+============================================================

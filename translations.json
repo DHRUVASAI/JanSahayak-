@@ -1,0 +1,416 @@
+{
+  "en": {
+    "yes": "Yes ✅",
+    "no": "No ❌",
+    "share_contact": "📱 Share My Number",
+    "voice_hint": "🎤 Or send a voice message",
+    "income_options": [
+      "< ₹1 Lakh",
+      "₹1–2 Lakh",
+      "> ₹2 Lakh"
+    ],
+    "land_options": [
+      "< 2 Acres",
+      "2–5 Acres",
+      "> 5 Acres"
+    ],
+    "scheme_pmkisan": "🌾 PM-KISAN",
+    "scheme_ration": "🍚 Ration Card",
+    "scheme_ayushman": "🏥 Ayushman Bharat",
+    "scheme_prompt": "Which scheme do you want to apply for?",
+    "lang_confirm": "Great! I'll help you in English. 😊",
+    "family_options": [
+      "1-2 members",
+      "3-4 members",
+      "5+ members"
+    ],
+    "state_options": [
+      "Andhra Pradesh",
+      "Telangana",
+      "Maharashtra",
+      "Tamil Nadu",
+      "Karnataka",
+      "Other"
+    ],
+    "error_generic": "😔 Something went wrong. Please try again.",
+    "error_ocr_failed": "😔 Could not read your Aadhaar card. Please send a clear, well-lit photo.",
+    "error_upload_failed": "😔 Could not upload your document. Please try again.",
+    "error_invalid_phone": "😔 Invalid phone number. Please share your contact using the button.",
+    "error_not_eligible": "😔 Sorry, you are not eligible for this scheme.",
+    "error_session_expired": "😔 Session expired. Please send /start to begin again.",
+    "consent_title": "📋 Before we begin",
+    "consent_body": "To help you apply for government schemes, I need your:\n• Name and Aadhaar number\n• Date of birth and address\n• Mobile number\n\nYour information is stored securely and used only for scheme applications. Your Aadhaar will be masked.",
+    "consent_agree": "✅ I Agree",
+    "consent_decline": "❌ Decline",
+    "consent_declined_msg": "No problem! Come back anytime you need help.",
+    "consent_privacy_note": "🔒 Your data is safe with us."
+  },
+  "hi": {
+    "yes": "हाँ ✅",
+    "no": "नहीं ❌",
+    "share_contact": "📱 नंबर शेयर करें",
+    "voice_hint": "🎤 या आवाज़ में बोलें",
+    "income_options": [
+      "< ₹1 लाख",
+      "₹1–2 लाख",
+      "> ₹2 लाख"
+    ],
+    "land_options": [
+      "< 2 एकड़",
+      "2–5 एकड़",
+      "> 5 एकड़"
+    ],
+    "scheme_pmkisan": "🌾 पीएम-किसान",
+    "scheme_ration": "🍚 राशन कार्ड",
+    "scheme_ayushman": "🏥 आयुष्मान भारत",
+    "scheme_prompt": "आप किस योजना के लिए आवेदन करना चाहते हैं?",
+    "lang_confirm": "बढ़िया! मैं हिंदी में मदद करूंगा। 😊",
+    "family_options": [
+      "1-2 सदस्य",
+      "3-4 सदस्य",
+      "5+ सदस्य"
+    ],
+    "state_options": [
+      "आंध्र प्रदेश",
+      "तेलंगाना",
+      "महाराष्ट्र",
+      "तमिलनाडु",
+      "कर्नाटक",
+      "अन्य"
+    ],
+    "error_generic": "😔 कुछ गड़बड़ हुई। फिर से कोशिश करें।",
+    "error_ocr_failed": "😔 आधार कार्ड स्पष्ट नहीं दिखा। अच्छी रोशनी में साफ फोटो भेजें।",
+    "error_upload_failed": "😔 दस्तावेज़ अपलोड नहीं हुआ। फिर से कोशिश करें।",
+    "error_invalid_phone": "😔 गलत फोन नंबर। बटन से अपना संपर्क साझा करें।",
+    "error_not_eligible": "😔 माफ़ करें, आप इस योजना के लिए पात्र नहीं हैं।",
+    "error_session_expired": "😔 सत्र समाप्त। /start भेजकर फिर से शुरू करें।",
+    "consent_title": "📋 शुरू करने से पहले",
+    "consent_body": "सरकारी योजनाओं के लिए आवेदन में मदद के लिए मुझे चाहिए:\n• नाम और आधार नंबर\n• जन्म तिथि और पता\n• मोबाइल नंबर\n\nआपकी जानकारी सुरक्षित रहेगी।",
+    "consent_agree": "✅ मैं सहमत हूं",
+    "consent_decline": "❌ मना करें",
+    "consent_declined_msg": "कोई बात नहीं! जब जरूरत हो वापस आएं।",
+    "consent_privacy_note": "🔒 आपका डेटा सुरक्षित है।"
+  },
+  "te": {
+    "yes": "అవును ✅",
+    "no": "కాదు ❌",
+    "share_contact": "📱 నంబర్ షేర్ చేయండి",
+    "voice_hint": "🎤 లేదా వాయిస్‌లో చెప్పండి",
+    "income_options": [
+      "< ₹1 లక్ష",
+      "₹1–2 లక్ష",
+      "> ₹2 లక్ష"
+    ],
+    "land_options": [
+      "< 2 ఎకరాలు",
+      "2–5 ఎకరాలు",
+      "> 5 ఎకరాలు"
+    ],
+    "scheme_pmkisan": "🌾 పీఎం-కిసాన్",
+    "scheme_ration": "🍚 రేషన్ కార్డు",
+    "scheme_ayushman": "🏥 ఆయుష్మాన్ భారత్",
+    "scheme_prompt": "మీరు ఏ పథకానికి దరఖాస్తు చేయాలనుకుంటున్నారు?",
+    "lang_confirm": "చాలా బాగుంది! నేను తెలుగులో సహాయం చేస్తాను। 😊",
+    "family_options": [
+      "1-2 మంది",
+      "3-4 మంది",
+      "5+ మంది"
+    ],
+    "state_options": [
+      "ఆంధ్రప్రదేశ్",
+      "తెలంగాణ",
+      "మహారాష్ట్ర",
+      "తమిళనాడు",
+      "కర్ణాటక",
+      "ఇతర"
+    ],
+    "error_generic": "😔 సమస్య వచ్చింది. మళ్ళీ ప్రయత్నించండి.",
+    "error_ocr_failed": "😔 ఆధార్ కార్డు స్పష్టంగా కనిపించలేదు. మంచి వెలుతురులో స్పష్టమైన ఫోటో పంపండి.",
+    "error_upload_failed": "😔 పత్రం అప్లోడ్ కాలేదు. మళ్ళీ ప్రయత్నించండి.",
+    "error_invalid_phone": "😔 తప్పు ఫోన్ నంబర్. బటన్ ద్వారా మీ సంప్రదింపు షేర్ చేయండి.",
+    "error_not_eligible": "😔 క్షమించండి, మీరు ఈ పథకానికి అర్హులు కారు.",
+    "error_session_expired": "😔 సెషన్ ముగిసింది. /start పంపి మళ్ళీ ప్రారంభించండి.",
+    "consent_title": "📋 ప్రారంభించే ముందు",
+    "consent_body": "పథకాలకు దరఖాస్తు చేయడానికి నాకు అవసరం:\n• పేరు మరియు ఆధార్ నంబర్\n• జన్మతేదీ మరియు చిరునామా\n• మొబైల్ నంబర్\n\nమీ సమాచారం సురక్షితంగా ఉంటుంది.",
+    "consent_agree": "✅ నేను అంగీకరిస్తున్నాను",
+    "consent_decline": "❌ నిరాకరించు",
+    "consent_declined_msg": "ఫర్వాలేదు! మళ్ళీ అవసరమైనప్పుడు రండి.",
+    "consent_privacy_note": "🔒 మీ డేటా సురక్షితం."
+  },
+  "ta": {
+    "yes": "ஆம் ✅",
+    "no": "இல்லை ❌",
+    "share_contact": "📱 எண் பகிரவும்",
+    "voice_hint": "🎤 அல்லது குரலில் சொல்லுங்கள்",
+    "income_options": [
+      "< ₹1 லட்சம்",
+      "₹1–2 லட்சம்",
+      "> ₹2 லட்சம்"
+    ],
+    "land_options": [
+      "< 2 ஏக்கர்",
+      "2–5 ஏக்கர்",
+      "> 5 ஏக்கர்"
+    ],
+    "scheme_pmkisan": "🌾 பிஎம்-கிசான்",
+    "scheme_ration": "🍚 ரேஷன் அட்டை",
+    "scheme_ayushman": "🏥 ஆயுஷ்மான் பாரத்",
+    "scheme_prompt": "எந்த திட்டத்திற்கு விண்ணப்பிக்க விரும்புகிறீர்கள்?",
+    "lang_confirm": "நல்லது! தமிழில் உதவுகிறேன். 😊",
+    "family_options": [
+      "1-2 பேர்",
+      "3-4 பேர்",
+      "5+ பேர்"
+    ],
+    "state_options": [
+      "ஆந்திரா",
+      "தெலங்கானா",
+      "மகாராஷ்டிரா",
+      "தமிழ்நாடு",
+      "கர்நாடகா",
+      "மற்றவை"
+    ],
+    "error_generic": "😔 சிக்கல் ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.",
+    "error_ocr_failed": "😔 ஆதார் அட்டை தெளிவாக தெரியவில்லை. நல்ல ஒளியில் தெளிவான புகைப்படம் அனுப்பவும்.",
+    "error_upload_failed": "😔 ஆவணம் பதிவேற்றமாகவில்லை. மீண்டும் முயற்சிக்கவும்.",
+    "error_invalid_phone": "😔 தவறான தொலைபேசி எண். பொத்தான் மூலம் தொடர்பை பகிரவும்.",
+    "error_not_eligible": "😔 மன்னிக்கவும், இந்த திட்டத்திற்கு நீங்கள் தகுதியற்றவர்.",
+    "error_session_expired": "😔 அமர்வு முடிந்தது. /start அனுப்பி மீண்டும் தொடங்கவும்.",
+    "consent_title": "�� தொடங்குவதற்கு முன்",
+    "consent_body": "திட்டங்களுக்கு விண்ணப்பிக்க எனக்கு தேவை:\n• பெயர் மற்றும் ஆதார் எண்\n• பிறந்த தேதி மற்றும் முகவரி\n• மொபைல் எண்",
+    "consent_agree": "✅ நான் ஒப்புக்கொள்கிறேன்",
+    "consent_decline": "❌ மறு",
+    "consent_declined_msg": "பரவாயில்லை! தேவைப்படும்போது திரும்பி வாருங்கள்.",
+    "consent_privacy_note": "🔒 உங்கள் தரவு பாதுகாப்பாக உள்ளது."
+  },
+  "kn": {
+    "yes": "ಹೌದು ✅",
+    "no": "ಇಲ್ಲ ❌",
+    "share_contact": "📱 ನಂಬರ್ ಹಂಚಿ",
+    "voice_hint": "🎤 ಅಥವಾ ಧ್ವನಿಯಲ್ಲಿ ಹೇಳಿ",
+    "income_options": [
+      "< ₹1 ಲಕ್ಷ",
+      "₹1–2 ಲಕ್ಷ",
+      "> ₹2 ಲಕ್ಷ"
+    ],
+    "land_options": [
+      "< 2 ಎಕರೆ",
+      "2–5 ಎಕರೆ",
+      "> 5 ಎಕರೆ"
+    ],
+    "scheme_pmkisan": "🌾 ಪಿಎಂ-ಕಿಸಾನ್",
+    "scheme_ration": "🍚 ರೇಶನ್ ಕಾರ್ಡ್",
+    "scheme_ayushman": "🏥 ಆಯುಷ್ಮಾನ್ ಭಾರತ್",
+    "scheme_prompt": "ಯಾವ ಯೋಜನೆಗೆ ಅರ್ಜಿ ಸಲ್ಲಿಸಲು ಬಯಸುತ್ತೀರಿ?",
+    "lang_confirm": "ಒಳ್ಳೆಯದು! ಕನ್ನಡದಲ್ಲಿ ಸಹಾಯ ಮಾಡುತ್ತೇನೆ. 😊",
+    "family_options": [
+      "1-2 ಸದಸ್ಯರು",
+      "3-4 ಸದಸ್ಯರು",
+      "5+ ಸದಸ್ಯರು"
+    ],
+    "state_options": [
+      "ಆಂಧ್ರ ಪ್ರದೇಶ",
+      "ತೆಲಂಗಾಣ",
+      "ಮಹಾರಾಷ್ಟ್ರ",
+      "ತಮಿಳುನಾಡು",
+      "ಕರ್ನಾಟಕ",
+      "ಇತರ"
+    ],
+    "error_generic": "�� ಸಮಸ್ಯೆ ಆಯಿತು. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    "error_ocr_failed": "😔 ಆಧಾರ್ ಕಾರ್ಡ್ ಸ್ಪಷ್ಟವಾಗಿ ಕಾಣಿಸಲಿಲ್ಲ. ಉತ್ತಮ ಬೆಳಕಿನಲ್ಲಿ ಸ್ಪಷ್ಟ ಫೋಟೋ ಕಳುಹಿಸಿ.",
+    "error_upload_failed": "😔 ದಾಖಲೆ ಅಪ್ಲೋಡ್ ಆಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    "error_invalid_phone": "😔 ತಪ್ಪು ಫೋನ್ ನಂಬರ್. ಬಟನ್ ಮೂಲಕ ಸಂಪರ್ಕ ಹಂಚಿಕೊಳ್ಳಿ.",
+    "error_not_eligible": "😔 ಕ್ಷಮಿಸಿ, ನೀವು ಈ ಯೋಜನೆಗೆ ಅರ್ಹರಲ್ಲ.",
+    "error_session_expired": "😔 ಅಧಿವೇಶನ ಮುಗಿದಿದೆ. /start ಕಳುಹಿಸಿ ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ.",
+    "consent_title": "📋 ಪ್ರಾರಂಭಿಸುವ ಮೊದಲು",
+    "consent_body": "ಯೋಜನೆಗಳಿಗೆ ಅರ್ಜಿ ಸಲ್ಲಿಸಲು ನನಗೆ ಬೇಕು:\n• ಹೆಸರು ಮತ್ತು ಆಧಾರ್ ಸಂಖ್ಯೆ\n• ಜನ್ಮ ದಿನಾಂಕ ಮತ್ತು ವಿಳಾಸ\n• ಮೊಬೈಲ್ ನಂಬರ್",
+    "consent_agree": "✅ ನಾನು ಒಪ್ಪುತ್ತೇನೆ",
+    "consent_decline": "❌ ನಿರಾಕರಿಸು",
+    "consent_declined_msg": "ಪರವಾಗಿಲ್ಲ! ಅಗತ್ಯವಿದ್ದಾಗ ಹಿಂತಿರುಗಿ.",
+    "consent_privacy_note": "🔒 ನಿಮ್ಮ ಡೇಟಾ ಸುರಕ್ಷಿತವಾಗಿದೆ."
+  },
+  "ml": {
+    "yes": "അതെ ✅",
+    "no": "അല്ല ❌",
+    "share_contact": "📱 നമ്പർ പങ്കിടുക",
+    "voice_hint": "🎤 അല്ലെങ്കിൽ ശബ്ദത്തിൽ പറയൂ",
+    "income_options": [
+      "< ₹1 ലക്ഷം",
+      "₹1–2 ലക്ഷം",
+      "> ₹2 ലക്ഷം"
+    ],
+    "land_options": [
+      "< 2 ഏക്കർ",
+      "2–5 ഏക്കർ",
+      "> 5 ഏക്കർ"
+    ],
+    "scheme_pmkisan": "🌾 പിഎം-കിസാൻ",
+    "scheme_ration": "🍚 റേഷൻ കാർഡ്",
+    "scheme_ayushman": "🏥 ആയുഷ്മാൻ ഭാരത്",
+    "scheme_prompt": "ഏത് പദ്ധതിക്ക് അപേക്ഷിക്കണം?",
+    "lang_confirm": "നല്ലത്! മലയാളത്തിൽ സഹായിക്കാം. 😊",
+    "family_options": [
+      "1-2 അംഗങ്ങൾ",
+      "3-4 അംഗങ്ങൾ",
+      "5+ അംഗങ്ങൾ"
+    ],
+    "state_options": [
+      "ആന്ധ്ര",
+      "തെലങ്കാന",
+      "മഹാരാഷ്ട്ര",
+      "തമിഴ്നാട്",
+      "കർണാടക",
+      "മറ്റുള്ളവ"
+    ],
+    "error_generic": "😔 എന്തോ പ്രശ്നം. വീണ്ടും ശ്രമിക്കൂ.",
+    "error_ocr_failed": "😔 ആധാർ കാർഡ് വ്യക്തമായി കാണുന്നില്ല. നല്ല വെളിച്ചത്തിൽ വ്യക്തമായ ഫോട്ടോ അയക്കൂ.",
+    "error_upload_failed": "😔 ഡോക്യുമെന്റ് അപ്‌ലോഡ് ചെയ്തില്ല. വീണ്ടും ശ്രമിക്കൂ.",
+    "error_invalid_phone": "😔 തെറ്റായ ഫോൺ നമ്പർ. ബട്ടൺ ഉപയോഗിച്ച് കോൺടാക്റ്റ് ഷെയർ ചെയ്യൂ.",
+    "error_not_eligible": "😔 ക്ഷമിക്കണം, നിങ്ങൾ ഈ പദ്ധതിക്ക് യോഗ്യരല്ല.",
+    "error_session_expired": "😔 സെഷൻ അവസാനിച്ചു. /start അയച്ച് വീണ്ടും തുടങ്ങൂ.",
+    "consent_title": "�� തുടങ്ങുന്നതിന് മുൻപ്",
+    "consent_body": "പദ്ധതികളിൽ അപേക്ഷിക്കാൻ എനിക്ക് ആവശ്യം:\n• പേര്, ആധാർ നമ്പർ\n• ജനനതീയതി, വിലാസം\n• മൊബൈൽ നമ്പർ",
+    "consent_agree": "✅ ഞാൻ സമ്മതിക്കുന്നു",
+    "consent_decline": "❌ നിരസിക്കുക",
+    "consent_declined_msg": "കുഴപ്പമില്ല! ആവശ്യമുള്ളപ്പോൾ തിരിച്ചു വരൂ.",
+    "consent_privacy_note": "🔒 നിങ്ങളുടെ ഡേറ്റ സുരക്ഷിതമാണ്."
+  },
+  "mr": {
+    "yes": "हो ✅",
+    "no": "नाही ❌",
+    "share_contact": "📱 नंबर शेअर करा",
+    "voice_hint": "🎤 किंवा आवाजात सांगा",
+    "income_options": [
+      "< ₹1 लाख",
+      "₹1–2 लाख",
+      "> ₹2 लाख"
+    ],
+    "land_options": [
+      "< 2 एकर",
+      "2–5 एकर",
+      "> 5 एकर"
+    ],
+    "scheme_pmkisan": "🌾 पीएम-किसान",
+    "scheme_ration": "🍚 रेशन कार्ड",
+    "scheme_ayushman": "🏥 आयुष्मान भारत",
+    "scheme_prompt": "कोणत्या योजनेसाठी अर्ज करायचा आहे?",
+    "lang_confirm": "छान! मराठीत मदत करतो. 😊",
+    "family_options": [
+      "1-2 सदस्य",
+      "3-4 सदस्य",
+      "5+ सदस्य"
+    ],
+    "state_options": [
+      "आंध्र प्रदेश",
+      "तेलंगणा",
+      "महाराष्ट्र",
+      "तामिळनाडू",
+      "कर्नाटक",
+      "इतर"
+    ],
+    "error_generic": "😔 काहीतरी चूक झाली. पुन्हा प्रयत्न करा.",
+    "error_ocr_failed": "😔 आधार कार्ड स्पष्ट दिसले नाही. चांगल्या प्रकाशात स्पष्ट फोटो पाठवा.",
+    "error_upload_failed": "😔 दस्तऐवज अपलोड झाला नाही. पुन्हा प्रयत्न करा.",
+    "error_invalid_phone": "😔 चुकीचा फोन नंबर. बटणाने संपर्क शेअर करा.",
+    "error_not_eligible": "😔 माफ करा, तुम्ही या योजनेसाठी पात्र नाही.",
+    "error_session_expired": "😔 सत्र संपले. /start पाठवून पुन्हा सुरू करा.",
+    "consent_title": "📋 सुरू करण्यापूर्वी",
+    "consent_body": "योजनांसाठी अर्ज करण्यासाठी मला हवे:\n• नाव आणि आधार नंबर\n• जन्मतारीख आणि पत्ता\n• मोबाईल नंबर",
+    "consent_agree": "✅ मी सहमत आहे",
+    "consent_decline": "❌ नाकारा",
+    "consent_declined_msg": "काळजी नको! गरज असेल तेव्हा परत या.",
+    "consent_privacy_note": "🔒 तुमचा डेटा सुरक्षित आहे."
+  },
+  "as": {
+    "yes": "হয় ✅",
+    "no": "নহয় ❌",
+    "share_contact": "📱 নম্বৰ শ্বেয়াৰ কৰক",
+    "voice_hint": "🎤 অথবা কণ্ঠত কওক",
+    "income_options": [
+      "< ₹1 লাখ",
+      "₹1–2 লাখ",
+      "> ₹2 লাখ"
+    ],
+    "land_options": [
+      "< 2 বিঘা",
+      "2–5 বিঘা",
+      "> 5 বিঘা"
+    ],
+    "scheme_pmkisan": "🌾 পিএম-কিষান",
+    "scheme_ration": "🍚 ৰেচন কাৰ্ড",
+    "scheme_ayushman": "🏥 আয়ুষ্মান ভাৰত",
+    "scheme_prompt": "কোন আঁচনিৰ বাবে আবেদন কৰিব বিচাৰে?",
+    "lang_confirm": "ভাল! অসমীয়াত সহায় কৰিম. 😊",
+    "family_options": [
+      "1-2 সদস্য",
+      "3-4 সদস্য",
+      "5+ সদস্য"
+    ],
+    "state_options": [
+      "অন্ধ্ৰপ্ৰদেশ",
+      "তেলেংগানা",
+      "মহাৰাষ্ট্ৰ",
+      "তামিলনাডু",
+      "কৰ্ণাটক",
+      "অন্যান্য"
+    ],
+    "error_generic": "😔 কিবা সমস্যা হ'ল। পুনৰ চেষ্টা কৰক।",
+    "error_ocr_failed": "😔 আধাৰ কাৰ্ড স্পষ্টকৈ দেখা নগ'ল। ভাল পোহৰত স্পষ্ট ফটো পঠিয়াওক।",
+    "error_upload_failed": "😔 নথি আপলোড নহ'ল। পুনৰ চেষ্টা কৰক।",
+    "error_invalid_phone": "😔 ভুল ফোন নম্বৰ। বুটামৰ জৰিয়তে যোগাযোগ শ্বেয়াৰ কৰক।",
+    "error_not_eligible": "😔 দুঃখিত, আপুনি এই আঁচনিৰ বাবে যোগ্য নহয়।",
+    "error_session_expired": "😔 ছেছন শেষ হ'ল। /start পঠিয়াই পুনৰ আৰম্ভ কৰক।",
+    "consent_title": "📋 আৰম্ভ কৰাৰ আগতে",
+    "consent_body": "আঁচনিৰ বাবে আবেদন কৰিবলৈ মোক লাগে:\n• নাম আৰু আধাৰ নম্বৰ\n• জন্ম তাৰিখ আৰু ঠিকনা\n• মোবাইল নম্বৰ",
+    "consent_agree": "✅ মই সন্মত",
+    "consent_decline": "❌ অস্বীকাৰ",
+    "consent_declined_msg": "কোনো সমস্যা নাই! প্ৰয়োজন হ'লে উভতি আহক।",
+    "consent_privacy_note": "🔒 আপোনাৰ ডেটা সুৰক্ষিত।"
+  },
+  "bn": {
+    "yes": "হ্যাঁ ✅",
+    "no": "না ❌",
+    "share_contact": "📱 নম্বর শেয়ার করুন",
+    "voice_hint": "🎤 অথবা কণ্ঠে বলুন",
+    "income_options": [
+      "< ₹1 লক্ষ",
+      "₹1–2 লক্ষ",
+      "> ₹2 লক্ষ"
+    ],
+    "land_options": [
+      "< 2 বিঘা",
+      "2–5 বিঘা",
+      "> 5 বিঘা"
+    ],
+    "scheme_pmkisan": "🌾 পিএম-কিষান",
+    "scheme_ration": "🍚 রেশন কার্ড",
+    "scheme_ayushman": "🏥 আয়ুষ্মান ভারত",
+    "scheme_prompt": "কোন প্রকল্পের জন্য আবেদন করতে চান?",
+    "lang_confirm": "ভালো! বাংলায় সাহায্য করব. 😊",
+    "family_options": [
+      "1-2 সদস্য",
+      "3-4 সদস্য",
+      "5+ সদস্য"
+    ],
+    "state_options": [
+      "অন্ধ্রপ্রদেশ",
+      "তেলেঙ্গানা",
+      "মহারাষ্ট্র",
+      "তামিলনাড়ু",
+      "কর্ণাটক",
+      "অন্যান্য"
+    ],
+    "error_generic": "😔 কিছু সমস্যা হয়েছে। আবার চেষ্টা করুন।",
+    "error_ocr_failed": "😔 আধার কার্ড স্পষ্ট দেখা যায়নি। ভালো আলোতে স্পষ্ট ছবি পাঠান।",
+    "error_upload_failed": "😔 নথি আপলোড হয়নি। আবার চেষ্টা করুন।",
+    "error_invalid_phone": "😔 ভুল ফোন নম্বর। বোতাম দিয়ে যোগাযোগ শেয়ার করুন।",
+    "error_not_eligible": "😔 দুঃখিত, আপনি এই প্রকল্পের জন্য যোগ্য নন।",
+    "error_session_expired": "😔 সেশন শেষ হয়েছে। /start পাঠিয়ে আবার শুরু করুন।",
+    "consent_title": "📋 শুরু করার আগে",
+    "consent_body": "প্রকল্পে আবেদনের জন্য আমার দরকার:\n• নাম এবং আধার নম্বর\n• জন্ম তারিখ এবং ঠিকানা\n• মোবাইল নম্বর",
+    "consent_agree": "✅ আমি সম্মত",
+    "consent_decline": "❌ প্রত্যাখ্যান",
+    "consent_declined_msg": "কোনো সমস্যা নেই! প্রয়োজনে ফিরে আসুন।",
+    "consent_privacy_note": "🔒 আপনার ডেটা নিরাপদ।"
+  }
+}

@@ -1,0 +1,417 @@
+"""
+chat.py — LLM, language detection, keyboard helpers
+JanSahayak | Team VUPO | AWS Hackathon
+"""
+
+import os
+import re
+import json
+import logging
+from groq import Groq
+
+logger = logging.getLogger(__name__)
+
+# ── Groq client ──────────────────────────────────────────────────────────────
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+LLM_MODEL = "llama-3.3-70b-versatile"
+
+# ── Language config ───────────────────────────────────────────────────────────
+LANGUAGE_CONFIG = {
+    "en": {
+        "name": "English",
+        "flag": "🇬🇧",
+        "yes": "Yes ✅",
+        "no": "No ❌",
+        "share_contact": "📱 Share My Number",
+        "voice_hint": "🎤 Or send a voice message",
+        "income_options": ["< ₹1 Lakh", "₹1–2 Lakh", "> ₹2 Lakh"],
+        "land_options": ["< 2 Acres", "2–5 Acres", "> 5 Acres"],
+    },
+    "hi": {
+        "name": "हिंदी",
+        "flag": "🇮🇳",
+        "yes": "हाँ ✅",
+        "no": "नहीं ❌",
+        "share_contact": "📱 नंबर शेयर करें",
+        "voice_hint": "🎤 या आवाज़ में बोलें",
+        "income_options": ["< ₹1 लाख", "₹1–2 लाख", "> ₹2 लाख"],
+        "land_options": ["< 2 एकड़", "2–5 एकड़", "> 5 एकड़"],
+    },
+    "te": {
+        "name": "తెలుగు",
+        "flag": "🏳️",
+        "yes": "అవును ✅",
+        "no": "కాదు ❌",
+        "share_contact": "📱 నంబర్ షేర్ చేయండి",
+        "voice_hint": "🎤 లేదా వాయిస్‌లో చెప్పండి",
+        "income_options": ["< ₹1 లక్ష", "₹1–2 లక్ష", "> ₹2 లక్ష"],
+        "land_options": ["< 2 ఎకరాలు", "2–5 ఎకరాలు", "> 5 ఎకరాలు"],
+    },
+    "ta": {
+        "name": "தமிழ்",
+        "flag": "🏳️",
+        "yes": "ஆம் ✅",
+        "no": "இல்லை ❌",
+        "share_contact": "📱 எண் பகிரவும்",
+        "voice_hint": "🎤 அல்லது குரலில் சொல்லுங்கள்",
+        "income_options": ["< ₹1 லட்சம்", "₹1–2 லட்சம்", "> ₹2 லட்சம்"],
+        "land_options": ["< 2 ஏக்கர்", "2–5 ஏக்கர்", "> 5 ஏக்கர்"],
+    },
+    "kn": {
+        "name": "ಕನ್ನಡ",
+        "flag": "🏳️",
+        "yes": "ಹೌದು ✅",
+        "no": "ಇಲ್ಲ ❌",
+        "share_contact": "📱 ನಂಬರ್ ಹಂಚಿ",
+        "voice_hint": "🎤 ಅಥವಾ ಧ್ವನಿಯಲ್ಲಿ ಹೇಳಿ",
+        "income_options": ["< ₹1 ಲಕ್ಷ", "₹1–2 ಲಕ್ಷ", "> ₹2 ಲಕ್ಷ"],
+        "land_options": ["< 2 ಎಕರೆ", "2–5 ಎಕರೆ", "> 5 ಎಕರೆ"],
+    },
+    "ml": {
+        "name": "മലയാളം",
+        "flag": "🏳️",
+        "yes": "അതെ ✅",
+        "no": "അല്ല ❌",
+        "share_contact": "📱 നമ്പർ പങ്കിടുക",
+        "voice_hint": "🎤 അല്ലെങ്കിൽ ശബ്ദത്തിൽ പറയൂ",
+        "income_options": ["< ₹1 ലക്ഷം", "₹1–2 ലക്ഷം", "> ₹2 ലക്ഷം"],
+        "land_options": ["< 2 ഏക്കർ", "2–5 ഏക്കർ", "> 5 ഏക്കർ"],
+    },
+    "mr": {
+        "name": "मराठी",
+        "flag": "🏳️",
+        "yes": "हो ✅",
+        "no": "नाही ❌",
+        "share_contact": "📱 नंबर शेअर करा",
+        "voice_hint": "🎤 किंवा आवाजात सांगा",
+        "income_options": ["< ₹1 लाख", "₹1–2 लाख", "> ₹2 लाख"],
+        "land_options": ["< 2 एकर", "2–5 एकर", "> 5 एकर"],
+    },
+    "as": {
+        "name": "অসমীয়া",
+        "flag": "🏳️",
+        "yes": "হয় ✅",
+        "no": "নহয় ❌",
+        "share_contact": "📱 নম্বৰ শ্বেয়াৰ কৰক",
+        "voice_hint": "🎤 অথবা কণ্ঠত কওক",
+        "income_options": ["< ₹1 লাখ", "₹1–2 লাখ", "> ₹2 লাখ"],
+        "land_options": ["< 2 বিঘা", "2–5 বিঘা", "> 5 বিঘা"],
+    },
+    "bn": {
+        "name": "বাংলা",
+        "flag": "🏳️",
+        "yes": "হ্যাঁ ✅",
+        "no": "না ❌",
+        "share_contact": "📱 নম্বর শেয়ার করুন",
+        "voice_hint": "🎤 অথবা কণ্ঠে বলুন",
+        "income_options": ["< ₹1 লক্ষ", "₹1–2 লক্ষ", "> ₹2 লক্ষ"],
+        "land_options": ["< 2 বিঘা", "2–5 বিঘা", "> 5 বিঘা"],
+    },
+}
+
+# ── Romanized keyword → language ─────────────────────────────────────────────
+ROMANIZED_LANG_MAP = {
+    # Hindi
+    "namaskar": "hi", "namaste": "hi", "haan": "hi", "nahi": "hi",
+    "mera": "hi", "meri": "hi", "mere": "hi", "kisan": "hi", "gaon": "hi",
+    # Telugu
+    "namaskaram": "te", "namaskaaram": "te", "avunu": "te", "avunu": "te",
+    "kaadu": "te", "naa": "te", "maa": "te", "raitu": "te", "velugu": "te",
+    # Tamil
+    "vanakkam": "ta", "aam": "ta", "illai": "ta", "naan": "ta", "uzhavar": "ta",
+    # Kannada
+    "namaskara": "kn", "haudu": "kn", "illa": "kn", "naanu": "kn",
+    # Malayalam
+    "namaskaaram": "ml", "athe": "ml", "alla": "ml",
+    # Marathi
+    "namaskar": "mr", "ho": "mr", "nahi": "mr", "maza": "mr", "shetkari": "mr",
+    # Assamese
+    "nomoskar": "as", "hoy": "as", "nhoy": "as",
+    # Bengali
+    "namaskar": "bn", "hyan": "bn", "na": "bn",
+}
+
+# ── Script-based language detection ──────────────────────────────────────────
+SCRIPT_RANGES = {
+    "hi": (0x0900, 0x097F),   # Devanagari (also covers mr)
+    "te": (0x0C00, 0x0C7F),
+    "ta": (0x0B80, 0x0BFF),
+    "kn": (0x0C80, 0x0CFF),
+    "ml": (0x0D00, 0x0D7F),
+    "bn": (0x0980, 0x09FF),   # also Assamese
+    "as": (0x0980, 0x09FF),
+}
+
+def detect_language(text: str) -> str | None:
+    """Detect language from text. Returns lang code or None."""
+    if not text:
+        return None
+    text_lower = text.lower().strip()
+
+    # Script-based detection (most reliable)
+    for char in text:
+        cp = ord(char)
+        for lang, (lo, hi) in SCRIPT_RANGES.items():
+            if lo <= cp <= hi:
+                # Distinguish Marathi from Hindi (both Devanagari)
+                if lang == "hi":
+                    marathi_words = ["आहे", "नाही", "हो", "मी", "आम्ही", "शेतकरी"]
+                    if any(w in text for w in marathi_words):
+                        return "mr"
+                # Distinguish Assamese from Bengali (both Bengali script)
+                if lang == "bn":
+                    assamese_words = ["আছে", "নহয়", "হয়", "মই", "আমি"]
+                    if any(w in text for w in assamese_words):
+                        return "as"
+                return lang
+
+    # Romanized keyword detection
+    words = re.findall(r'\b\w+\b', text_lower)
+    for word in words:
+        if word in ROMANIZED_LANG_MAP:
+            return ROMANIZED_LANG_MAP[word]
+
+    return None
+
+# ── System prompt ─────────────────────────────────────────────────────────────
+SYSTEM_PROMPT = """You are JanSahayak, a helpful assistant for rural Indians applying for government schemes.
+
+PERSONALITY:
+- Warm, patient, simple language
+- Like a trusted village helper (सहायक / సహాయకుడు)
+- Never use jargon or complex words
+- Always reply in the SAME language the user wrote in
+
+SCHEMES YOU HELP WITH:
+1. PM-KISAN — ₹6000/year for farmers
+2. Ration Card — subsidized food grains
+3. Ayushman Bharat — free health insurance up to ₹5 lakh
+
+CONVERSATION RULES:
+1. Ask ONE question at a time — never multiple questions together
+2. For Yes/No questions, END your message with: OPTIONS: yes_no
+3. For income questions, END with: OPTIONS: income
+4. For land size questions, END with: OPTIONS: land
+5. For mobile number, END with: OPTIONS: contact
+6. For scheme selection at start, END with: OPTIONS: schemes
+
+ELIGIBILITY RULES (check silently, announce result):
+PM-KISAN:
+- Must be a farmer (owns/cultivates land)
+- Land must be ≤ 5 acres (> 5 acres = NOT eligible)
+- Annual income must be ≤ ₹2 lakh (> ₹2 lakh = NOT eligible)
+- Must NOT be a government employee or taxpayer
+
+Ration Card:
+- Annual income < ₹1 lakh for BPL card
+- Must be Indian citizen with valid address
+
+Ayushman Bharat:
+- Family income < ₹5 lakh/year
+- Not covered by other central govt health schemes
+
+FLOW:
+1. Greet → ask which scheme they want → OPTIONS: schemes
+2. Ask eligibility questions one by one with OPTIONS tags
+3. If eligible → collect: Name (from Aadhaar), Mobile, State, District
+4. Ask them to upload Aadhaar photo for verification
+5. Confirm details → submit form
+
+IMPORTANT: Always include OPTIONS tag so user gets buttons — they may not know how to type!
+
+Example:
+"क्या आप किसान हैं? (Are you a farmer?)
+OPTIONS: yes_no"
+"""
+
+# ── Keyboard builders (return Telegram InlineKeyboardMarkup dict) ─────────────
+def build_yes_no_keyboard(lang: str = "en") -> dict:
+    cfg = LANGUAGE_CONFIG.get(lang, LANGUAGE_CONFIG["en"])
+    return {
+        "inline_keyboard": [[
+            {"text": cfg["yes"], "callback_data": "ans_yes"},
+            {"text": cfg["no"], "callback_data": "ans_no"},
+        ]]
+    }
+
+def build_income_keyboard(lang: str = "en") -> dict:
+    cfg = LANGUAGE_CONFIG.get(lang, LANGUAGE_CONFIG["en"])
+    opts = cfg["income_options"]
+    return {
+        "inline_keyboard": [[
+            {"text": opts[0], "callback_data": "income_low"},
+            {"text": opts[1], "callback_data": "income_mid"},
+            {"text": opts[2], "callback_data": "income_high"},
+        ]]
+    }
+
+def build_land_keyboard(lang: str = "en") -> dict:
+    cfg = LANGUAGE_CONFIG.get(lang, LANGUAGE_CONFIG["en"])
+    opts = cfg["land_options"]
+    return {
+        "inline_keyboard": [[
+            {"text": opts[0], "callback_data": "land_small"},
+            {"text": opts[1], "callback_data": "land_mid"},
+            {"text": opts[2], "callback_data": "land_large"},
+        ]]
+    }
+
+def build_contact_keyboard(lang: str = "en") -> dict:
+    cfg = LANGUAGE_CONFIG.get(lang, LANGUAGE_CONFIG["en"])
+    return {
+        "inline_keyboard": [[
+            {"text": cfg["share_contact"], "callback_data": "request_contact"},
+        ], [
+            {"text": cfg["voice_hint"], "callback_data": "hint_voice"},
+        ]]
+    }
+
+def build_schemes_keyboard(lang: str = "en") -> dict:
+    return {
+        "inline_keyboard": [
+            [{"text": "🌾 PM-KISAN", "callback_data": "scheme_pmkisan"}],
+            [{"text": "🍚 Ration Card", "callback_data": "scheme_ration"}],
+            [{"text": "🏥 Ayushman Bharat", "callback_data": "scheme_ayushman"}],
+        ]
+    }
+
+def build_language_keyboard() -> dict:
+    """Language selection at /start"""
+    langs = [
+        ("🇮🇳 English", "lang_en"),
+        ("हिंदी", "lang_hi"),
+        ("తెలుగు", "lang_te"),
+        ("தமிழ்", "lang_ta"),
+        ("ಕನ್ನಡ", "lang_kn"),
+        ("മലയാളം", "lang_ml"),
+        ("मराठी", "lang_mr"),
+        ("অসমীয়া", "lang_as"),
+        ("বাংলা", "lang_bn"),
+    ]
+    # 3 per row
+    rows = []
+    for i in range(0, len(langs), 3):
+        row = [{"text": t, "callback_data": cb} for t, cb in langs[i:i+3]]
+        rows.append(row)
+    return {"inline_keyboard": rows}
+
+def get_keyboard_for_options_tag(tag: str, lang: str = "en") -> dict | None:
+    """Parse OPTIONS tag from LLM response and return appropriate keyboard."""
+    tag = tag.strip().lower()
+    if tag == "yes_no":
+        return build_yes_no_keyboard(lang)
+    elif tag == "income":
+        return build_income_keyboard(lang)
+    elif tag == "land":
+        return build_land_keyboard(lang)
+    elif tag == "contact":
+        return build_contact_keyboard(lang)
+    elif tag == "schemes":
+        return build_schemes_keyboard(lang)
+    return None
+
+def extract_options_tag(text: str) -> tuple[str, str | None]:
+    """
+    Extract OPTIONS: <tag> from LLM response.
+    Returns (cleaned_text, tag_or_None)
+    """
+    match = re.search(r'OPTIONS:\s*(\w+)', text, re.IGNORECASE)
+    if match:
+        tag = match.group(1)
+        cleaned = re.sub(r'OPTIONS:\s*\w+', '', text, flags=re.IGNORECASE).strip()
+        return cleaned, tag
+    return text, None
+
+# ── Callback data → human-readable answer ────────────────────────────────────
+CALLBACK_ANSWER_MAP = {
+    "ans_yes": "Yes",
+    "ans_no": "No",
+    "income_low": "Less than 1 lakh",
+    "income_mid": "1 to 2 lakh",
+    "income_high": "More than 2 lakh",
+    "land_small": "Less than 2 acres",
+    "land_mid": "2 to 5 acres",
+    "land_large": "More than 5 acres",
+    "scheme_pmkisan": "PM-KISAN",
+    "scheme_ration": "Ration Card",
+    "scheme_ayushman": "Ayushman Bharat",
+}
+
+def resolve_callback(callback_data: str) -> str | None:
+    """Convert callback_data to a natural language answer for the LLM."""
+    return CALLBACK_ANSWER_MAP.get(callback_data)
+
+# ── Eligibility quick-check ───────────────────────────────────────────────────
+def check_eligibility_from_callback(scheme: str, callback_data: str) -> str | None:
+    """
+    Returns rejection reason string if clearly ineligible, else None.
+    Called right after a button tap so we can short-circuit.
+    """
+    if scheme == "pmkisan":
+        if callback_data == "ans_no":  # not a farmer
+            return "not_farmer"
+        if callback_data == "income_high":  # > 2 lakh
+            return "income_too_high"
+        if callback_data == "land_large":  # > 5 acres
+            return "land_too_large"
+    return None
+
+# ── LLM call ─────────────────────────────────────────────────────────────────
+def get_llm_response(
+    conversation_history: list[dict],
+    user_message: str,
+    language: str = "en",
+    scheme: str | None = None,
+) -> str:
+    """
+    Call Groq LLaMA with full conversation history.
+    Returns raw LLM text (may contain OPTIONS: tag).
+    """
+    system = SYSTEM_PROMPT
+    if language and language != "en":
+        lang_name = LANGUAGE_CONFIG.get(language, {}).get("name", language)
+        system += f"\n\nIMPORTANT: The user's preferred language is {lang_name}. Reply in {lang_name}."
+    if scheme:
+        system += f"\n\nThe user is applying for: {scheme.upper()}. Focus questions on this scheme."
+
+    messages = conversation_history.copy()
+    messages.append({"role": "user", "content": user_message})
+
+    try:
+        response = client.chat.completions.create(
+            model=LLM_MODEL,
+            messages=[{"role": "system", "content": system}] + messages,
+            max_tokens=512,
+            temperature=0.4,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        logger.error(f"LLM error: {e}")
+        return "Sorry, I'm having trouble right now. Please try again. / माफ़ करें, कोशिश करें।"
+
+# ── STT via Groq Whisper ──────────────────────────────────────────────────────
+def transcribe_audio(audio_bytes: bytes, language: str | None = None) -> str:
+    """Transcribe audio using Groq Whisper."""
+    import tempfile
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as f:
+            f.write(audio_bytes)
+            f.flush()
+            with open(f.name, "rb") as audio_file:
+                kwargs = {"file": audio_file, "model": "whisper-large-v3"}
+                if language:
+                    kwargs["language"] = language
+                result = client.audio.transcriptions.create(**kwargs)
+            return result.text
+    except Exception as e:
+        logger.error(f"Whisper error: {e}")
+        return ""
+
+def extract_phone_from_text(text: str) -> str | None:
+    """Extract 10-digit Indian phone number from transcribed text."""
+    digits = re.sub(r'\D', '', text)
+    # Look for 10-digit sequence, optionally prefixed with +91 or 0
+    match = re.search(r'(?:91|0)?(\d{10})', digits)
+    if match:
+        return match.group(1)
+    return None

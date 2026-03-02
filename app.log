@@ -1,0 +1,53 @@
+nohup: ignoring input
+INFO:     Started server process [29048]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+✅ Successfully connected to Firebase!
+INFO:     103.125.161.178:57202 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:57208 - "GET /rpa/get-job HTTP/1.1" 200 OK
+[TELEGRAM] Update: {'update_id': 86247894, 'message': {'message_id': 760, 'from': {'id': 5347421672, 'is_bot': False, 'first_name': 'V DhruvaSai_2420030009', 'language_code': 'en'}, 'chat': {'id': 5347421672, 'first_name': 'V DhruvaSai_2420030009', 'type': 'private'}, 'date': 1772225817, 'photo': [{'file_id': 'AgACAgUAAxkBAAICrGmh-PmL3ti7zQABjf6sL_n21PpURwACbQxrG8K-EVU_7coITdzV0QEAAwIAA3MAAzoE', 'file_unique_id': 'AQADbQxrG8K-EVV4', 'file_size': 626, 'width': 67, 'height': 90}, {'file_id': 'AgACAgUAAxkBAAICrGmh-PmL3ti7zQABjf6sL_n21PpURwACbQxrG8K-EVU_7coITdzV0QEAAwIAA20AAzoE', 'file_unique_id': 'AQADbQxrG8K-EVVy', 'file_size': 6152, 'width': 240, 'height': 320}, {'file_id': 'AgACAgUAAxkBAAICrGmh-PmL3ti7zQABjf6sL_n21PpURwACbQxrG8K-EVU_7coITdzV0QEAAwIAA3gAAzoE', 'file_unique_id': 'AQADbQxrG8K-EVV9', 'file_size': 25039, 'width': 600, 'height': 800}, {'file_id': 'AgACAgUAAxkBAAICrGmh-PmL3ti7zQABjf6sL_n21PpURwACbQxrG8K-EVU_7coITdzV0QEAAwIAA3kAAzoE', 'file_unique_id': 'AQADbQxrG8K-EVV-', 'file_size': 25687, 'width': 960, 'height': 1280}]}}
+[OCR ERROR] 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 1.108233907s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-2.5-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '1s'}]}}
+INFO:     103.125.161.178:57213 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47098 - "POST /telegram/webhook HTTP/1.1" 200 OK
+INFO:     103.125.161.178:61359 - "GET /rpa/get-job HTTP/1.1" 200 OK
+[TELEGRAM] Update: {'update_id': 86247895, 'message': {'message_id': 763, 'from': {'id': 5347421672, 'is_bot': False, 'first_name': 'V DhruvaSai_2420030009', 'language_code': 'en'}, 'chat': {'id': 5347421672, 'first_name': 'V DhruvaSai_2420030009', 'type': 'private'}, 'date': 1772225822, 'photo': [{'file_id': 'AgACAgUAAxkBAAICl2mh9mktubIxpC3X9CvxLa9-vgv3AAJsDGsbwr4RVQydKd0ESfI9AQADAgADcwADOgQ', 'file_unique_id': 'AQADbAxrG8K-EVV4', 'file_size': 1668, 'width': 75, 'height': 90}, {'file_id': 'AgACAgUAAxkBAAICl2mh9mktubIxpC3X9CvxLa9-vgv3AAJsDGsbwr4RVQydKd0ESfI9AQADAgADbQADOgQ', 'file_unique_id': 'AQADbAxrG8K-EVVy', 'file_size': 31276, 'width': 267, 'height': 320}, {'file_id': 'AgACAgUAAxkBAAICl2mh9mktubIxpC3X9CvxLa9-vgv3AAJsDGsbwr4RVQydKd0ESfI9AQADAgADeAADOgQ', 'file_unique_id': 'AQADbAxrG8K-EVV9', 'file_size': 149777, 'width': 668, 'height': 800}, {'file_id': 'AgACAgUAAxkBAAICl2mh9mktubIxpC3X9CvxLa9-vgv3AAJsDGsbwr4RVQydKd0ESfI9AQADAgADeQADOgQ', 'file_unique_id': 'AQADbAxrG8K-EVV-', 'file_size': 184861, 'width': 932, 'height': 1116}]}}
+[OCR ERROR] 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 55.399288481s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-2.5-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '55s'}]}}
+INFO:     127.0.0.1:47098 - "POST /telegram/webhook HTTP/1.1" 200 OK
+INFO:     103.125.161.178:61363 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:61370 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:61376 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:61389 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:61417 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:61423 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:61429 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:61433 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:64538 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:64542 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:64548 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:64553 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:64560 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:64581 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:64586 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:59233 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:59240 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:59245 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:61460 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:61466 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:56635 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:56640 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:61811 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:61818 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:61823 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:49672 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:49682 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:49689 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:49696 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:49701 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:49706 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:64434 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     103.125.161.178:64440 - "GET /rpa/get-job HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29048]

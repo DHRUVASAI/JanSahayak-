@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NFSA Portal | New Ration Card Application</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; font-size: 14px; }
+
+  /* ══ DEMO OVERLAY ══ */
+  #demo-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center; }
+  #demo-overlay.active { display:flex; }
+  #demo-panel { background:#fff; border-radius:8px; padding:0; max-width:420px; width:92%; box-shadow:0 20px 60px rgba(0,0,0,0.3); overflow:hidden; }
+  #demo-panel-header { background:#1a3c6e; padding:20px 24px; }
+  #demo-panel-header h2 { color:#fff; font-size:1.05rem; font-weight:700; margin-bottom:4px; }
+  #demo-panel-header p { color:rgba(255,255,255,0.7); font-size:0.78rem; }
+  #demo-panel-body { padding:20px 24px; }
+  .progress-meta { display:flex; justify-content:space-between; font-size:11px; color:#666; margin-bottom:6px; }
+  #progress-pct { color:#1a3c6e; font-weight:700; }
+  #demo-progress { height:5px; background:#e9ecef; border-radius:3px; overflow:hidden; margin-bottom:18px; }
+  #demo-progress-bar { height:100%; width:0%; background:linear-gradient(90deg,#1a3c6e,#28a745); transition:width 0.5s ease; border-radius:3px; }
+  #demo-steps { display:flex; flex-direction:column; gap:2px; }
+  .demo-step { display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:5px; opacity:0; transform:translateY(4px); transition:all 0.3s ease; font-size:0.82rem; color:#666; }
+  .demo-step.visible { opacity:1; transform:translateY(0); }
+  .demo-step.active { background:#e8f0fe; color:#1a3c6e; font-weight:600; }
+  .demo-step.done { opacity:0.5; }
+  .step-dot { width:18px; height:18px; border-radius:50%; border:2px solid #ced4da; display:flex; align-items:center; justify-content:center; font-size:9px; flex-shrink:0; }
+  .demo-step.active .step-dot { border-color:#1a3c6e; background:#1a3c6e; color:#fff; }
+  .demo-step.done .step-dot { border-color:#28a745; background:#28a745; color:#fff; }
+  #demo-panel-footer { padding:14px 24px 18px; border-top:1px solid #e9ecef; display:flex; justify-content:space-between; align-items:center; }
+  #demo-ref-display { font-size:11px; color:#666; display:none; }
+  #demo-ref-display span { color:#28a745; font-weight:700; }
+  #demo-close-btn { display:none; background:#28a745; color:#fff; border:none; padding:8px 18px; border-radius:5px; cursor:pointer; font-size:0.82rem; font-weight:600; }
+
+  /* ══ RPA CURSOR ══ */
+  #rpa-cursor { position:fixed; pointer-events:none; z-index:10000; display:none; }
+  #rpa-cursor svg { filter:drop-shadow(0 2px 6px rgba(26,60,110,0.5)); }
+  #rpa-cursor-label { position:fixed; background:#1a3c6e; color:#fff; font-size:10px; font-weight:700; padding:3px 8px; border-radius:4px; pointer-events:none; z-index:10001; display:none; white-space:nowrap; }
+  .field-highlight { outline:2px solid #1a3c6e !important; outline-offset:1px; background:#e8f0fe !important; }
+
+  /* ══ PORTAL ══ */
+  #gov-bar { background:#003366; color:#fff; text-align:center; padding:6px; font-size:0.72rem; letter-spacing:0.5px; }
+  #header { background:#fff; border-bottom:3px solid #ff9900; padding:10px 24px; display:flex; align-items:center; gap:14px; }
+  #header-logo { width:52px; height:52px; background:#003366; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.4rem; flex-shrink:0; }
+  #header-text h1 { color:#003366; font-size:1.1rem; font-weight:700; }
+  #header-text p { color:#555; font-size:0.75rem; }
+  #header-text .sub { color:#888; font-size:0.7rem; }
+  .tricolor-bar { display:flex; flex-direction:column; margin-left:auto; width:38px; border:1px solid #ddd; border-radius:2px; overflow:hidden; }
+  .tricolor-bar div { height:8px; }
+  .tricolor-bar .s { background:#FF9933; }
+  .tricolor-bar .w { background:#fff; display:flex; align-items:center; justify-content:center; font-size:5px; color:#000080; }
+  .tricolor-bar .g { background:#138808; }
+  nav { background:#1a5276; display:flex; }
+  nav a { color:#ccc; padding:11px 18px; text-decoration:none; font-size:0.82rem; transition:background 0.2s; }
+  nav a:hover, nav a.active { background:#ff9900; color:#fff; }
+  #demo-banner { background:#fff3cd; border-bottom:1px solid #ffc107; padding:8px 24px; display:flex; align-items:center; gap:10px; font-size:0.8rem; color:#664d03; }
+  #demo-banner button { margin-left:auto; background:#1a3c6e; color:#fff; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; font-size:0.78rem; font-weight:600; }
+
+  main { max-width:860px; margin:20px auto; padding:0 16px 50px; }
+  .breadcrumb { font-size:0.75rem; color:#666; margin-bottom:14px; }
+  .breadcrumb a { color:#1a5276; text-decoration:none; }
+
+  .form-card { background:#fff; border-radius:6px; overflow:hidden; box-shadow:0 1px 8px rgba(0,0,0,0.08); }
+  .form-header { background:linear-gradient(135deg,#1a3c6e,#1a5276); color:#fff; padding:18px 24px; display:flex; align-items:center; gap:12px; }
+  .form-header-icon { width:44px; height:44px; background:rgba(255,255,255,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; }
+  .form-header h2 { font-size:1.05rem; font-weight:700; }
+  .form-header p { font-size:0.75rem; opacity:0.8; margin-top:2px; }
+  .alert-info { background:#fff3cd; border-left:4px solid #ffc107; padding:10px 18px; font-size:0.8rem; color:#664d03; display:flex; gap:8px; }
+
+  .form-body { padding:22px 24px; }
+  .section-title { font-size:0.78rem; font-weight:700; letter-spacing:0.8px; color:#1a3c6e; border-bottom:2px solid #ff9900; padding-bottom:6px; margin:22px 0 16px; text-transform:uppercase; display:flex; align-items:center; gap:8px; }
+  .section-title:first-child { margin-top:0; }
+  .section-num { background:#1a3c6e; color:#fff; font-size:10px; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px; }
+  .form-row.single { grid-template-columns:1fr; }
+  .form-row.triple { grid-template-columns:1fr 1fr 1fr; }
+  .form-group { display:flex; flex-direction:column; gap:5px; }
+  label { font-size:0.78rem; font-weight:600; color:#333; }
+  label .req { color:#dc3545; }
+  input, select, textarea { padding:9px 11px; border:1px solid #ced4da; border-radius:4px; font-size:0.88rem; color:#333; background:#fff; width:100%; transition:border-color 0.2s, box-shadow 0.2s; font-family:inherit; }
+  select option { background:#fff; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:#1a5276; box-shadow:0 0 0 3px rgba(26,82,118,0.12); }
+  input::placeholder, textarea::placeholder { color:#aaa; font-size:0.83rem; }
+  textarea { resize:vertical; min-height:70px; }
+  .input-group { display:flex; }
+  .input-group input { border-radius:4px 0 0 4px; }
+  .btn-verify { background:#1a5276; color:#fff; border:none; padding:9px 12px; border-radius:0 4px 4px 0; cursor:pointer; font-size:0.75rem; font-weight:600; white-space:nowrap; }
+  .field-hint { font-size:0.7rem; color:#888; }
+
+  /* Card type selector */
+  .card-type-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+  .ct-btn { border:2px solid #ced4da; border-radius:5px; padding:10px 6px; text-align:center; cursor:pointer; transition:all 0.2s; background:#fff; }
+  .ct-btn:hover { border-color:#1a5276; }
+  .ct-btn.selected { border-color:#1a3c6e; background:#e8f0fe; }
+  .ct-code { font-weight:800; font-size:0.95rem; color:#1a3c6e; }
+  .ct-name { font-size:0.65rem; color:#666; margin-top:2px; }
+  .ct-desc { font-size:0.6rem; color:#888; margin-top:1px; }
+
+  /* Success */
+  #success-banner { display:none; background:#d1e7dd; border:1px solid #a3cfbb; border-radius:6px; padding:16px 20px; margin-bottom:18px; }
+  #success-banner.show { display:flex; align-items:center; gap:14px; }
+  .suc-icon { width:38px; height:38px; background:#198754; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:#fff; flex-shrink:0; }
+  .suc-text h3 { color:#0a3622; font-size:0.9rem; font-weight:700; margin-bottom:3px; }
+  .suc-text p { color:#145a32; font-size:0.78rem; }
+  .suc-ref { font-size:0.85rem; font-weight:700; color:#198754; background:#c3e6cb; padding:2px 8px; border-radius:4px; display:inline-block; margin-top:4px; }
+
+  .form-footer { padding:16px 24px; background:#f8f9fa; border-top:1px solid #e9ecef; display:flex; justify-content:space-between; align-items:center; }
+  .btn-reset { background:#fff; color:#666; border:1px solid #ced4da; padding:9px 18px; border-radius:4px; cursor:pointer; font-size:0.85rem; }
+  .btn-submit { background:linear-gradient(135deg,#1a3c6e,#1a5276); color:#fff; border:none; padding:10px 28px; border-radius:4px; font-size:0.9rem; font-weight:700; cursor:pointer; box-shadow:0 3px 10px rgba(26,60,110,0.25); transition:transform 0.1s, box-shadow 0.2s; }
+  .btn-submit:hover { transform:translateY(-1px); box-shadow:0 5px 14px rgba(26,60,110,0.35); }
+
+  @media(max-width:600px){ .form-row,.form-row.triple{grid-template-columns:1fr} .card-type-grid{grid-template-columns:repeat(2,1fr)} }
+</style>
+</head>
+<body>
+
+<div id="rpa-cursor">
+  <svg width="18" height="22" viewBox="0 0 18 22" fill="none">
+    <path d="M1 1L1 18L5.5 13.5L8.5 21L11 20L8 12.5L14 12.5Z" fill="white" stroke="#1a3c6e" stroke-width="1.2" stroke-linejoin="round"/>
+  </svg>
+</div>
+<div id="rpa-cursor-label"></div>
+
+<div id="demo-overlay">
+  <div id="demo-panel">
+    <div id="demo-panel-header">
+      <h2>🤖 JanSahayak RPA Agent</h2>
+      <p>Auto-filling Ration Card form from WhatsApp conversation</p>
+    </div>
+    <div id="demo-panel-body">
+      <div class="progress-meta"><span>Progress</span><span id="progress-pct">0%</span></div>
+      <div id="demo-progress"><div id="demo-progress-bar"></div></div>
+      <div id="demo-steps">
+        <div class="demo-step" id="s1"><div class="step-dot">1</div>Receiving data from WhatsApp bot</div>
+        <div class="demo-step" id="s2"><div class="step-dot">2</div>Extracting family & income details</div>
+        <div class="demo-step" id="s3"><div class="step-dot">3</div>Opening NFSA Ration Card portal</div>
+        <div class="demo-step" id="s4"><div class="step-dot">4</div>Filling applicant details</div>
+        <div class="demo-step" id="s5"><div class="step-dot">5</div>Entering family & address info</div>
+        <div class="demo-step" id="s6"><div class="step-dot">6</div>Submitting application</div>
+        <div class="demo-step" id="s7"><div class="step-dot">7</div>Application ID generated ✓</div>
+      </div>
+    </div>
+    <div id="demo-panel-footer">
+      <div id="demo-ref-display">Application ID: <span id="demo-ref-id">—</span></div>
+      <button id="demo-close-btn" onclick="closeDemo()">View Form →</button>
+    </div>
+  </div>
+</div>
+
+<div id="gov-bar">भारत सरकार | Government of India — Department of Food & Public Distribution</div>
+<div id="header">
+  <div id="header-logo">🍚</div>
+  <div id="header-text">
+    <h1>NFSA Portal</h1>
+    <p>National Food Security Act — Ration Card Management System</p>
+    <div class="sub">राष्ट्रीय खाद्य सुरक्षा अधिनियम — राशन कार्ड प्रबंधन प्रणाली</div>
+  </div>
+  <div class="tricolor-bar"><div class="s"></div><div class="w">●</div><div class="g"></div></div>
+</div>
+<nav>
+  <a href="#">Home</a>
+  <a href="#" class="active">New Application</a>
+  <a href="#">Check Status</a>
+  <a href="#">Fair Price Shops</a>
+  <a href="#">Contact Us</a>
+</nav>
+<div id="demo-banner">
+  <span>⚡</span>
+  <span><strong>Demo Mode</strong> — JanSahayak will auto-fill this form using WhatsApp conversation data</span>
+  <button onclick="startDemo()">▶ Run Demo</button>
+</div>
+
+<main>
+  <div class="breadcrumb"><a href="#">Home</a> › <a href="#">Citizen Services</a> › <strong>New Ration Card Application</strong></div>
+
+  <div id="success-banner">
+    <div class="suc-icon">✓</div>
+    <div class="suc-text">
+      <h3>Application Submitted Successfully!</h3>
+      <p>Ration Card will be issued within 30 working days</p>
+      <div class="suc-ref" id="success-ref">—</div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-header">
+      <div class="form-header-icon">🍚</div>
+      <div>
+        <h2>New Ration Card Application Form</h2>
+        <p>नया राशन कार्ड आवेदन | Please fill all mandatory fields marked with *</p>
+      </div>
+    </div>
+    <div class="alert-info">
+      <span>⚠️</span>
+      <span><strong>Important:</strong> Aadhaar is mandatory for all family members above 5 years. Mobile must be linked with Aadhaar for OTP verification.</span>
+    </div>
+    <div class="form-body">
+
+      <div class="section-title"><span class="section-num">1</span> CARD TYPE / राशन कार्ड प्रकार</div>
+      <div class="card-type-grid">
+        <div class="ct-btn selected" onclick="selectCard(this,'aay')">
+          <div class="ct-code">AAY</div>
+          <div class="ct-name">Antyodaya</div>
+          <div class="ct-desc">Poorest families</div>
+        </div>
+        <div class="ct-btn" onclick="selectCard(this,'phh')">
+          <div class="ct-code">PHH</div>
+          <div class="ct-name">Priority HH</div>
+          <div class="ct-desc">BPL families</div>
+        </div>
+        <div class="ct-btn" onclick="selectCard(this,'nphh')">
+          <div class="ct-code">NPHH</div>
+          <div class="ct-name">Non-Priority</div>
+          <div class="ct-desc">APL families</div>
+        </div>
+        <div class="ct-btn" onclick="selectCard(this,'apl')">
+          <div class="ct-code">APL</div>
+          <div class="ct-name">Above Poverty</div>
+          <div class="ct-desc">General category</div>
+        </div>
+      </div>
+      <input type="hidden" id="card_type" value="aay">
+
+      <div class="section-title"><span class="section-num">2</span> HEAD OF FAMILY DETAILS / मुखिया का विवरण</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="head_name">Full Name (as per Aadhaar) <span class="req">*</span></label>
+          <input type="text" id="head_name" placeholder="Enter full name">
+        </div>
+        <div class="form-group">
+          <label for="head_gender">Gender / लिंग <span class="req">*</span></label>
+          <select id="head_gender"><option value="">-- Select --</option><option value="female">Female / महिला</option><option value="male">Male / पुरुष</option><option value="other">Other / अन्य</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="head_dob">Date of Birth <span class="req">*</span></label>
+          <input type="text" id="head_dob" placeholder="DD/MM/YYYY">
+        </div>
+        <div class="form-group">
+          <label for="head_occupation">Occupation / व्यवसाय</label>
+          <select id="head_occupation">
+            <option value="">-- Select --</option>
+            <option value="farmer">Farmer / किसान</option>
+            <option value="labour">Daily Labour / दैनिक मजदूर</option>
+            <option value="self_employed">Self Employed / स्व-रोजगार</option>
+            <option value="unemployed">Unemployed / बेरोजगार</option>
+            <option value="other">Other / अन्य</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="head_category">Social Category / सामाजिक वर्ग <span class="req">*</span></label>
+          <select id="head_category">
+            <option value="">-- Select --</option>
+            <option value="general">General</option>
+            <option value="sc">SC</option>
+            <option value="st">ST</option>
+            <option value="obc">OBC</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="monthly_income">Monthly Income (₹) <span class="req">*</span></label>
+          <input type="text" id="monthly_income" placeholder="e.g. 8000">
+        </div>
+      </div>
+
+      <div class="section-title"><span class="section-num">3</span> AADHAAR & CONTACT / आधार और संपर्क</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="aadhaar">Aadhaar Number <span class="req">*</span></label>
+          <div class="input-group">
+            <input type="text" id="aadhaar" placeholder="XXXX XXXX XXXX" maxlength="14">
+            <button class="btn-verify" onclick="verifyOTP()">Verify OTP</button>
+          </div>
+          <span class="field-hint">12-digit Aadhaar number</span>
+        </div>
+        <div class="form-group">
+          <label for="mobile">Mobile (Aadhaar linked) <span class="req">*</span></label>
+          <input type="text" id="mobile" placeholder="+91 XXXXX XXXXX">
+        </div>
+      </div>
+
+      <div class="section-title"><span class="section-num">4</span> FAMILY DETAILS / परिवार का विवरण</div>
+      <div class="form-row triple">
+        <div class="form-group">
+          <label for="family_members">Total Members <span class="req">*</span></label>
+          <input type="number" id="family_members" placeholder="e.g. 4" min="1">
+        </div>
+        <div class="form-group">
+          <label for="children_count">Children (below 18)</label>
+          <input type="number" id="children_count" placeholder="e.g. 2" min="0">
+        </div>
+        <div class="form-group">
+          <label for="senior_count">Senior Citizens (60+)</label>
+          <input type="number" id="senior_count" placeholder="e.g. 1" min="0">
+        </div>
+      </div>
+
+      <div class="section-title"><span class="section-num">5</span> ADDRESS DETAILS / पता विवरण</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="state">State / राज्य <span class="req">*</span></label>
+          <select id="state">
+            <option value="">-- Select State --</option>
+            <option value="andhra_pradesh">Andhra Pradesh</option>
+            <option value="bihar">Bihar</option>
+            <option value="gujarat">Gujarat</option>
+            <option value="haryana">Haryana</option>
+            <option value="karnataka">Karnataka</option>
+            <option value="madhya_pradesh">Madhya Pradesh</option>
+            <option value="maharashtra">Maharashtra</option>
+            <option value="rajasthan">Rajasthan</option>
+            <option value="telangana">Telangana</option>
+            <option value="uttar_pradesh">Uttar Pradesh</option>
+            <option value="west_bengal">West Bengal</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="district">District / जिला <span class="req">*</span></label>
+          <input type="text" id="district" placeholder="Enter district">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="village">Village / Ward <span class="req">*</span></label>
+          <input type="text" id="village" placeholder="Enter village or ward name">
+        </div>
+        <div class="form-group">
+          <label for="pincode">PIN Code <span class="req">*</span></label>
+          <input type="text" id="pincode" placeholder="6-digit PIN" maxlength="6">
+        </div>
+      </div>
+      <div class="form-row single">
+        <div class="form-group">
+          <label for="full_address">Full Address <span class="req">*</span></label>
+          <textarea id="full_address" placeholder="House No, Street, Locality, Tehsil..."></textarea>
+        </div>
+      </div>
+
+      <div class="section-title"><span class="section-num">6</span> EXISTING CARD / मौजूदा राशन कार्ड</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="existing_card">Existing Ration Card?</label>
+          <select id="existing_card">
+            <option value="no">No — Applying for first time</option>
+            <option value="yes">Yes — Surrendering old card</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="old_card_number">Old Card Number (if surrendering)</label>
+          <input type="text" id="old_card_number" placeholder="Enter existing card number">
+        </div>
+      </div>
+
+    </div>
+    <div class="form-footer">
+      <button class="btn-reset" onclick="resetForm()">↺ Reset</button>
+      <button class="btn-submit" id="submit-btn" onclick="submitForm()">Submit Application →</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const DD = {
+  card_type:'phh', head_name:'Ramesh Kumar Singh', head_gender:'male',
+  head_dob:'15/03/1978', head_occupation:'farmer', head_category:'obc',
+  monthly_income:'7500', aadhaar:'4567 8901 2345', mobile:'+91 98765 43210',
+  family_members:'4', children_count:'2', senior_count:'1',
+  state:'uttar_pradesh', district:'Varanasi', village:'Rampur Kalan',
+  pincode:'221001', full_address:'Near Shiv Mandir, Main Road, Rampur Kalan'
+};
+const STEPS=[
+  {id:'s1',p:14,d:900},{id:'s2',p:28,d:1000},{id:'s3',p:42,d:700},
+  {id:'s4',p:60,d:200},{id:'s5',p:80,d:200},{id:'s6',p:94,d:1400},{id:'s7',p:100,d:600}
+];
+const cur=document.getElementById('rpa-cursor'),curL=document.getElementById('rpa-cursor-label');
+window.addEventListener('DOMContentLoaded',()=>{ if(new URLSearchParams(location.search).get('demo')==='true') setTimeout(startDemo,700); });
+function selectCard(el,val){ document.querySelectorAll('.ct-btn').forEach(b=>b.classList.remove('selected')); el.classList.add('selected'); document.getElementById('card_type').value=val; }
+async function startDemo(){
+  document.getElementById('demo-overlay').classList.add('active');
+  const bar=document.getElementById('demo-progress-bar'),pct=document.getElementById('progress-pct');
+  for(let i=0;i<STEPS.length;i++){
+    const s=STEPS[i],el=document.getElementById(s.id);
+    if(i>0){const p=document.getElementById(STEPS[i-1].id);p.classList.remove('active');p.classList.add('done');p.querySelector('.step-dot').textContent='✓';}
+    el.classList.add('visible','active'); bar.style.width=s.p+'%'; pct.textContent=s.p+'%';
+    await sleep(s.d);
+  }
+  const ref='RC2025'+Math.floor(Math.random()*9000000+1000000);
+  document.getElementById('demo-ref-id').textContent=ref;
+  document.getElementById('demo-ref-display').style.display='block';
+  document.getElementById('demo-close-btn').style.display='inline-block';
+  await sleep(400); closeDemo(); await sleep(200); cur.style.display='block'; curL.style.display='block';
+  await runFill(ref);
+}
+function closeDemo(){ document.getElementById('demo-overlay').classList.remove('active'); cur.style.display='none'; curL.style.display='none'; }
+async function runFill(ref){
+  const fields=[
+    {id:'head_name',v:DD.head_name,t:'i'},{id:'head_gender',v:DD.head_gender,t:'s'},
+    {id:'head_dob',v:DD.head_dob,t:'i'},{id:'head_occupation',v:DD.head_occupation,t:'s'},
+    {id:'head_category',v:DD.head_category,t:'s'},{id:'monthly_income',v:DD.monthly_income,t:'i'},
+    {id:'aadhaar',v:DD.aadhaar,t:'i'},{id:'mobile',v:DD.mobile,t:'i'},
+    {id:'family_members',v:DD.family_members,t:'i'},{id:'children_count',v:DD.children_count,t:'i'},
+    {id:'senior_count',v:DD.senior_count,t:'i'},{id:'state',v:DD.state,t:'s'},
+    {id:'district',v:DD.district,t:'i'},{id:'village',v:DD.village,t:'i'},
+    {id:'pincode',v:DD.pincode,t:'i'},{id:'full_address',v:DD.full_address,t:'i'}
+  ];
+  for(const f of fields){
+    const el=document.getElementById(f.id); if(!el) continue;
+    el.scrollIntoView({behavior:'smooth',block:'center'}); await sleep(80);
+    const r=el.getBoundingClientRect();
+    await moveCursor(r.left+r.width/2,r.top+r.height/2,f.id);
+    el.classList.add('field-highlight'); el.focus();
+    if(f.t==='s'){el.value=f.v;}
+    else{el.value='';for(const c of f.v){el.value+=c;await sleep(30+Math.random()*20);}}
+    await sleep(150); el.classList.remove('field-highlight');
+  }
+  const btn=document.getElementById('submit-btn');
+  btn.scrollIntoView({behavior:'smooth',block:'center'}); await sleep(200);
+  const br=btn.getBoundingClientRect();
+  await moveCursor(br.left+br.width/2,br.top+br.height/2,'Submit'); await sleep(300);
+  cur.style.display='none'; curL.style.display='none'; showSuccess(ref);
+}
+function moveCursor(tx,ty,label){
+  return new Promise(res=>{
+    const sx=parseFloat(cur.style.left)||window.innerWidth/2,sy=parseFloat(cur.style.top)||200;
+    const steps=20; let s=0; curL.textContent=label;
+    const iv=setInterval(()=>{ s++; const t=s/steps,e=t<0.5?2*t*t:-1+(4-2*t)*t;
+      const cx=sx+(tx-sx)*e,cy=sy+(ty-sy)*e;
+      cur.style.left=cx+'px'; cur.style.top=cy+'px';
+      curL.style.left=(cx+18)+'px'; curL.style.top=(cy-6)+'px';
+      if(s>=steps){clearInterval(iv);res();}
+    },16);
+  });
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function showSuccess(ref){ const b=document.getElementById('success-banner'); document.getElementById('success-ref').textContent=ref; b.classList.add('show'); b.scrollIntoView({behavior:'smooth'}); }
+function verifyOTP(){ const v=document.getElementById('aadhaar').value.replace(/\s/g,''); alert(v.length===12?'OTP sent to registered mobile.\n(Demo: use 123456)':'Please enter valid 12-digit Aadhaar.'); }
+function submitForm(){
+  const req=['head_name','head_gender','head_dob','head_category','monthly_income','aadhaar','mobile','family_members','state','district','village','pincode','full_address'];
+  const miss=req.filter(id=>!document.getElementById(id).value.trim());
+  if(miss.length){document.getElementById(miss[0]).focus();alert('Missing fields: '+miss.join(', '));return;}
+  showSuccess('RC2025'+Math.floor(Math.random()*9000000+1000000));
+}
+function resetForm(){
+  document.querySelectorAll('input,select,textarea').forEach(el=>el.tagName==='SELECT'?(el.selectedIndex=0):(el.value=''));
+  document.getElementById('success-banner').classList.remove('show');
+  document.querySelectorAll('.ct-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
+  document.getElementById('card_type').value='aay';
+}
+</script>
+</body>
+</html>
