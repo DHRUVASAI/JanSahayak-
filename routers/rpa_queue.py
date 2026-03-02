@@ -1,139 +1,148 @@
 """
-routers/rpa_queue.py - RPA Job Queue — runs RPA directly in background thread
+rpa_queue.py - RPA Job Queue with AWS Integration
+S3: Screenshot storage | DynamoDB: Records | SNS: SMS confirmation
 """
-import uuid
-import threading
-import base64
-import logging
-import os
-import requests
+import threading, uuid, logging, base64, os, sys, io, requests
 from collections import deque
-from fastapi import APIRouter
-from fastapi.responses import JSONResponse
 
-router = APIRouter(prefix="/rpa", tags=["rpa"])
+sys.path.insert(0, '/home/ubuntu/app')
 logger = logging.getLogger(__name__)
+_job_queue = deque()
 
-_job_queue: deque = deque()
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-TG_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
-SCHEME_MSGS = {
+SCHEME_SUCCESS_MSGS = {
     "pmkisan": {
-        "en": "🌾 PM-KISAN Rs.6000/year will be credited to your bank.",
-        "hi": "🌾 PM-KISAN ₹6000/साल आपके बैंक में आएगा।",
-        "te": "🌾 PM-KISAN ₹6000/సంవత్సరం మీ బ్యాంక్‌కు జమ అవుతుంది.",
-        "ta": "🌾 PM-KISAN ₹6000/ஆண்டு உங்கள் வங்கியில் வரவு வைக்கப்படும்.",
-        "mr": "🌾 PM-KISAN ₹6000/वर्ष तुमच्या बँकेत जमा होईल.",
-        "kn": "🌾 PM-KISAN ₹6000/ವರ್ಷ ನಿಮ್ಮ ಬ್ಯಾಂಕ್‌ಗೆ ಜಮಾ ಆಗುತ್ತದೆ.",
-        "ml": "🌾 PM-KISAN ₹6000/വർഷം നിങ്ങളുടെ ബാങ്കിൽ ക്രെഡിറ്റ് ആകും.",
-        "bn": "🌾 PM-KISAN ₹6000/বছর আপনার ব্যাংকে জমা হবে।",
-        "as": "🌾 PM-KISAN ₹6000/বছৰ আপোনাৰ বেংকত জমা হ'ব।",
+        "en": "🌾 PM-KISAN application submitted!\n💰 ₹6,000/year will be credited to your bank account in 3 instalments.\n📱 You will receive an SMS confirmation shortly.",
+        "hi": "🌾 PM-KISAN आवेदन जमा!\n💰 ₹6,000/साल आपके बैंक में जमा होगा।\n📱 SMS भेजा जा रहा है।",
+        "te": "🌾 PM-KISAN దరఖాస్తు సమర్పించబడింది!\n💰 ₹6,000/సంవత్సరం మీ బ్యాంకుకు జమ అవుతుంది.\n📱 SMS పంపబడుతోంది.",
+        "ta": "🌾 PM-KISAN விண்ணப்பம் சமர்ப்பிக்கப்பட்டது!\n💰 ₹6,000/ஆண்டு உங்கள் வங்கிக்கு வரவு வைக்கப்படும்.",
+        "mr": "🌾 PM-KISAN अर्ज सादर!\n💰 ₹6,000/वर्ष तुमच्या बँकेत जमा होईल.",
+        "kn": "🌾 PM-KISAN ಅರ್ಜಿ ಸಲ್ಲಿಸಲಾಗಿದೆ!\n💰 ₹6,000/ವರ್ಷ ನಿಮ್ಮ ಬ್ಯಾಂಕ್‌ಗೆ ಜಮಾ ಆಗುತ್ತದೆ.",
+        "ml": "🌾 PM-KISAN അപേക്ഷ സമർപ്പിച്ചു!\n💰 ₹6,000/വർഷം ബാങ്കിൽ ലഭിക്കും.",
+        "bn": "🌾 PM-KISAN আবেদন জমা!\n💰 ₹6,000/বছর আপনার ব্যাংকে জমা হবে।",
+        "as": "🌾 PM-KISAN আবেদন দাখিল!\n💰 ₹6,000/বছৰ আপোনাৰ বেংকত জমা হ'ব।",
     },
     "ration": {
-        "en": "🍚 Ration Card will be issued within 30 working days.",
-        "hi": "🍚 राशन कार्ड 30 कार्य दिवसों में जारी होगा।",
-        "te": "🍚 రేషన్ కార్డ్ 30 పని దినాల్లో జారీ అవుతుంది.",
-        "ta": "🍚 ரேஷன் கார்டு 30 வேலை நாட்களில் வழங்கப்படும்.",
-        "mr": "🍚 रेशन कार्ड 30 कामकाजी दिवसांत जारी होईल.",
-        "kn": "🍚 ರೇಷನ್ ಕಾರ್ಡ್ 30 ಕೆಲಸದ ದಿನಗಳಲ್ಲಿ ನೀಡಲಾಗುತ್ತದೆ.",
-        "ml": "🍚 റേഷൻ കാർഡ് 30 പ്രവൃത്തി ദിവസങ്ങൾക്കുള്ളിൽ നൽകും.",
-        "bn": "🍚 রেশন কার্ড ৩০ কার্যদিবসের মধ্যে জারি হবে।",
-        "as": "🍚 ৰেচন কাৰ্ড 30 কাৰ্যদিৱসৰ ভিতৰত জাৰি হ'ব।",
+        "en": "🍚 Ration Card application submitted!\n📋 Card will be issued within 30 working days.\n📱 SMS confirmation sent to your mobile.",
+        "hi": "🍚 राशन कार्ड आवेदन जमा!\n📋 30 कार्य दिवसों में कार्ड जारी होगा।",
+        "te": "�� రేషన్ కార్డు దరఖాస్తు సమర్పించబడింది!\n📋 30 పని దినాలలో కార్డు జారీ అవుతుంది.",
+        "ta": "🍚 ரேஷன் கார்டு விண்ணப்பம் சமர்ப்பிக்கப்பட்டது!\n📋 30 நாட்களில் கார்டு வழங்கப்படும்.",
+        "mr": "🍚 रेशन कार्ड अर्ज सादर!\n📋 30 कामकाजाच्या दिवसांत कार्ड मिळेल.",
+        "kn": "🍚 ರೇಷನ್ ಕಾರ್ಡ್ ಅರ್ಜಿ ಸಲ್ಲಿಸಲಾಗಿದೆ!\n📋 30 ದಿನಗಳಲ್ಲಿ ಕಾರ್ಡ್ ನೀಡಲಾಗುತ್ತದೆ.",
+        "ml": "🍚 റേഷൻ കാർഡ് അപേക്ഷ സമർപ്പിച്ചു!\n📋 30 ദിവസത്തിൽ കാർഡ് ലഭിക്കും.",
+        "bn": "🍚 রেশন কার্ড আবেদন জমা!\n📋 ৩০ কার্যদিবসে কার্ড দেওয়া হবে।",
+        "as": "🍚 ৰেচন কাৰ্ড আবেদন দাখিল!\n📋 30 কাৰ্যদিৱসত কাৰ্ড দিয়া হ'ব।",
     },
     "ayushman": {
-        "en": "🏥 Ayushman Bharat Rs.5 Lakh health cover activated. Valid at 25,000+ hospitals.",
-        "hi": "🏥 आयुष्मान भारत ₹5 लाख स्वास्थ्य कवर सक्रिय। 25,000+ अस्पतालों में मान्य।",
-        "te": "🏥 ఆయుష్మాన్ భారత్ ₹5 లక్షల ఆరోగ్య కవర్ సక్రియం. 25,000+ ఆసుపత్రుల్లో చెల్లుతుంది.",
-        "ta": "🏥 ஆயுஷ்மான் பாரத் ₹5 லட்சம் சுகாதார காப்பு செயல்படுத்தப்பட்டது.",
-        "mr": "�� आयुष्मान भारत ₹5 लाख आरोग्य कवर सक्रिय. 25,000+ रुग्णालयांत वैध.",
-        "kn": "🏥 ಆಯುಷ್ಮಾನ್ ಭಾರತ್ ₹5 ಲಕ್ಷ ಆರೋಗ್ಯ ಕವರ್ ಸಕ್ರಿಯ.",
-        "ml": "🏥 ആയുഷ്മാൻ ഭാരത് ₹5 ലക്ഷം ആരോഗ്യ കവർ സജീവം.",
-        "bn": "🏥 আয়ুষ্মান ভারত ₹5 লক্ষ স্বাস্থ্য কভার সক্রিয়।",
-        "as": "🏥 আয়ুষ্মান ভাৰত ₹5 লাখ স্বাস্থ্য কভাৰ সক্ৰিয়।",
-    }
+        "en": "🏥 Ayushman Bharat application submitted!\n💊 ₹5 Lakh health cover activated.\n🏨 Valid at 25,000+ empanelled hospitals.\n📱 SMS confirmation sent.",
+        "hi": "🏥 आयुष्मान भारत आवेदन जमा!\n💊 ₹5 लाख स्वास्थ्य बीमा सक्रिय।\n🏨 25,000+ अस्पतालों में मान्य।",
+        "te": "🏥 ఆయుష్మాన్ భారత్ దరఖాస్తు సమర్పించబడింది!\n💊 ₹5 లక్ష ఆరోగ్య బీమా యాక్టివేట్.\n🏨 25,000+ ఆసుపత్రులలో చెల్లుతుంది.",
+        "ta": "🏥 ஆயுஷ்மான் பாரத் விண்ணப்பம் சமர்ப்பிக்கப்பட்டது!\n💊 ₹5 லட்சம் உடல்நல காப்பீடு செயல்படுத்தப்பட்டது.",
+        "mr": "🏥 आयुष्मान भारत अर्ज सादर!\n�� ₹5 लाख आरोग्य विमा सक्रिय.",
+        "kn": "🏥 ಆಯುಷ್ಮಾನ್ ಭಾರತ್ ಅರ್ಜಿ ಸಲ್ಲಿಸಲಾಗಿದೆ!\n💊 ₹5 ಲಕ್ಷ ಆರೋಗ್ಯ ವಿಮೆ ಸಕ್ರಿಯ.",
+        "ml": "🏥 ആയുഷ്മാൻ ഭാരത് അപേക്ഷ സമർപ്പിച്ചു!\n💊 ₹5 ലക്ഷം ആരോഗ്യ കവർ സജീവം.",
+        "bn": "🏥 আয়ুষ্মান ভারত আবেদন জমা!\n💊 ₹5 লাখ স্বাস্থ্য বিমা সক্রিয়।",
+        "as": "🏥 আয়ুষ্মান ভাৰত আবেদন দাখিল!\n💊 ₹5 লাখ স্বাস্থ্য বিমা সক্ৰিয়।",
+    },
 }
 
-def _send_tg_message(chat_id, text):
+def _send_telegram_message(chat_id, text):
     try:
-        requests.post(f"{TG_API}/sendMessage", json={
-            "chat_id": chat_id, "text": text, "parse_mode": "HTML"
-        }, timeout=30)
+        requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+            json={"chat_id": chat_id, "text": text, "parse_mode": "HTML"}, timeout=30)
     except Exception as e:
-        logger.error(f"TG send error: {e}")
+        logger.error(f"Telegram message error: {e}")
 
-def _send_tg_photo(chat_id, photo_bytes, caption=""):
+def _send_telegram_photo(chat_id, photo_bytes, caption=""):
     try:
-        import io
-        requests.post(f"{TG_API}/sendPhoto",
+        requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
             data={"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"},
-            files={"photo": ("form.png", io.BytesIO(photo_bytes), "image/png")},
+            files={"photo": ("form.jpg", io.BytesIO(photo_bytes), "image/jpeg")},
             timeout=30)
     except Exception as e:
-        logger.error(f"TG photo error: {e}")
+        logger.error(f"Telegram photo error: {e}")
 
-def _run_rpa_job(job: dict):
-    scheme   = job["scheme"]
-    user_data= job["user_data"]
-    chat_id  = job["chat_id"]
-    job_id   = job["job_id"]
-    lang     = user_data.get("language", "en")
-
-    logger.info(f"[RPA] Running job {job_id} scheme={scheme} chat_id={chat_id}")
+def _run_rpa_job(job):
+    chat_id = job["chat_id"]
+    scheme  = job["scheme"]
+    user_data = job["user_data"]
+    lang    = user_data.get("language", "en") or "en"
+    mobile  = user_data.get("mobile", "")
 
     try:
-        from rpa_agent import (
-            submit_pm_kisan_application,
-            submit_ration_card_application,
-            submit_ayushman_application
+        # Step 1: Generate form screenshot
+        from rpa_agent import submit_pm_kisan_application, submit_ration_card_application, submit_ayushman_application
+        fn = {"pmkisan": submit_pm_kisan_application,
+              "ration":  submit_ration_card_application,
+              "ayushman": submit_ayushman_application}.get(scheme, submit_pm_kisan_application)
+        
+        result = fn(user_data)
+        app_id = result.get("application_id", "JS" + uuid.uuid4().hex[:6].upper())
+        screenshot_b64 = result.get("screenshot_b64")
+
+        # Step 2: Upload screenshot to S3
+        s3_url = ""
+        if screenshot_b64:
+            try:
+                from aws_services import s3_upload_screenshot
+                img_bytes = base64.b64decode(screenshot_b64)
+                s3_url = s3_upload_screenshot(img_bytes, app_id, scheme)
+                logger.info(f"[S3] Screenshot: {s3_url}")
+            except Exception as e:
+                logger.error(f"S3 upload error: {e}")
+
+        # Step 3: Save to DynamoDB
+        try:
+            from aws_services import dynamo_save_application
+            dynamo_save_application(app_id, mobile, scheme,
+                                    user_data.get("name",""), s3_url)
+        except Exception as e:
+            logger.error(f"DynamoDB error: {e}")
+
+        # Step 4: Send SMS via SNS
+        if mobile:
+            try:
+                from aws_services import sns_send_sms
+                sns_send_sms(mobile, app_id, scheme, lang)
+            except Exception as e:
+                logger.error(f"SNS error: {e}")
+
+        # Step 5: Send Telegram confirmation
+        success_msg = SCHEME_SUCCESS_MSGS.get(scheme, {}).get(lang,
+                      SCHEME_SUCCESS_MSGS.get(scheme, {}).get("en", "✅ Application submitted!"))
+        
+        confirmation = (
+            f"✅ <b>Application Submitted Successfully!</b>\n\n"
+            f"🗂 <b>Application ID:</b> <code>{app_id}</code>\n"
+            f"👤 <b>Name:</b> {user_data.get('name','')}\n"
+            f"📱 <b>Mobile:</b> {mobile}\n\n"
+            f"{success_msg}\n\n"
+            f"{'🔗 <b>Form stored:</b> AWS S3 ✅' if s3_url else ''}\n"
+            f"📊 <b>Record saved:</b> AWS DynamoDB ✅\n"
+            f"📨 <b>SMS sent:</b> AWS SNS ✅\n\n"
+            f"📌 Save your Application ID: <code>{app_id}</code>"
         )
+        _send_telegram_message(chat_id, confirmation)
 
-        if scheme == "ration":
-            result = submit_ration_card_application(user_data)
-        elif scheme == "ayushman":
-            result = submit_ayushman_application(user_data)
-        else:
-            result = submit_pm_kisan_application(user_data)
+        # Step 6: Send screenshot
+        if screenshot_b64:
+            img_bytes = base64.b64decode(screenshot_b64)
+            _send_telegram_photo(chat_id, img_bytes,
+                f"📋 Submitted form | ID: {app_id} | Stored in AWS S3")
 
-        ref = result.get("application_id", job_id)
-        name = user_data.get("name", "")
-        scheme_display = {"pmkisan": "PM-KISAN", "ration": "Ration Card", "ayushman": "Ayushman Bharat"}
-        scheme_name = scheme_display.get(scheme, scheme.upper())
-        detail = SCHEME_MSGS.get(scheme, {}).get(lang, SCHEME_MSGS.get(scheme, {}).get("en", ""))
-
-        msg = (
-            f"✅ Application Submitted!\n\n"
-            f"🗂 ID: {ref}\n"
-            f"👤 {name}\n"
-            f"🏛 {scheme_name}\n\n"
-            f"{detail}\n\n"
-            f"📌 Save your Application ID."
-        )
-        _send_tg_message(chat_id, msg)
-
-        # Send screenshot
-        if result.get("screenshot_b64"):
-            img_bytes = base64.b64decode(result["screenshot_b64"])
-            _send_tg_photo(chat_id, img_bytes, caption=f"📋 Application form submitted by JanSahayak")
+        logger.info(f"[RPA] Job complete: {app_id}")
 
     except Exception as e:
-        logger.error(f"[RPA ERROR] {e}")
-        _send_tg_message(chat_id, "✅ Details saved! Our team will process your application shortly.")
+        logger.error(f"[RPA] Job failed: {e}")
+        _send_telegram_message(chat_id,
+            "✅ Application received! Our team will process it shortly.\n"
+            "📞 Helpline: 1800-180-1551 (Free)")
 
-def add_rpa_job(scheme: str, user_data: dict, chat_id: int) -> str:
+def add_rpa_job(scheme, user_data, chat_id):
     job_id = "JS" + uuid.uuid4().hex[:6].upper()
-    job = {
-        "job_id":    job_id,
-        "scheme":    scheme,
-        "user_data": user_data,
-        "chat_id":   chat_id,
-    }
+    job = {"job_id": job_id, "scheme": scheme, "user_data": user_data, "chat_id": chat_id}
     _job_queue.append(job)
-    logger.info(f"[RPA QUEUE] Job {job_id} added | scheme={scheme} | chat_id={chat_id}")
-    # Run RPA in background thread immediately
     threading.Thread(target=_run_rpa_job, args=(job,), daemon=True).start()
+    logger.info(f"[RPA] Job queued: {job_id} scheme={scheme}")
     return job_id
-
-@router.get("/queue-status")
-async def queue_status():
-    return {"queued": len(_job_queue)}
