@@ -1,0 +1,8 @@
+firebase-credentials.json
+.env
+__pycache__/
+*.pyc
+*.log
+static/
+*.deb
+sleep
