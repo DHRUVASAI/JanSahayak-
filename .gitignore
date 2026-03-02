@@ -1,9 +1,7 @@
 __pycache__/
 *.pyc
-*.pyo
 *.log
 *.lock
 .env
 firebase-credentials.json
 *.deb
-/tmp/
