@@ -31,13 +31,36 @@ SCHEMES = {
     "3": ("ayushman", "Ayushman Bharat"),
 }
 
+def _get_db():
+    import firebase_admin
+    from firebase_admin import credentials, firestore
+    if not firebase_admin._apps:
+        cred_path = "/home/ubuntu/app/firebase-credentials.json"
+        firebase_admin.initialize_app(credentials.Certificate(cred_path))
+    return firestore.client()
+
 def get_state(user):
+    try:
+        db = _get_db()
+        doc = db.collection('wa_users').document(user.replace('+','').replace(':','')).get()
+        if doc.exists:
+            data = doc.to_dict()
+            _STATE[user] = data
+            return data
+    except Exception as e:
+        print('[FIREBASE GET] ' + str(e))
     if user not in _STATE:
-        _STATE[user] = {"step": "language_selection", "language": "en"}
+        _STATE[user] = {'step': 'language_selection', 'language': 'en'}
     return _STATE[user]
 
 def save_state(user, data):
     _STATE.setdefault(user, {}).update(data)
+    try:
+        db = _get_db()
+        db.collection('wa_users').document(user.replace('+','').replace(':','')).set(_STATE[user], merge=True)
+    except Exception as e:
+        print('[FIREBASE SAVE] ' + str(e))
+
 
 def twiml(message):
     xml = '<?xml version="1.0" encoding="UTF-8"?><Response><Message>' + message + '</Message></Response>'
@@ -279,7 +302,7 @@ async def whatsapp_webhook(request: Request):
         if scheme == "pmkisan":
             if body == "1":
                 save_state(user, {"step": "income"})
-                return twiml("Annual family income?\n\n1 - Less than Rs.1 lakh\n2 - Rs.1-2 lakh\n3 - More than Rs.2 lakh")
+                return twiml({"en": "Annual family income?\n\n1 - Less than Rs.1 lakh\n2 - Rs.1-2 lakh\n3 - More than Rs.2 lakh", "hi": "सालाना आमदनी?\n\n1 - Rs.1 लाख से कम\n2 - Rs.1-2 लाख\n3 - Rs.2 लाख से अधिक", "te": "వార్షిక ఆదాయం?\n\n1 - Rs.1 లక్ష కంటే తక్కువ\n2 - Rs.1-2 లక్షలు\n3 - Rs.2 లక్షలు పైన", "ta": "ஆண்டு வருமானம்?\n\n1 - Rs.1 லட்சத்திற்கும் குறைவு\n2 - Rs.1-2 லட்சம்\n3 - Rs.2 லட்சத்திற்கும் அதிகம்", "mr": "वार्षिक उत्पन्न?\n\n1 - Rs.1 लाखापेक्षा कमी\n2 - Rs.1-2 लाख\n3 - Rs.2 लाखापेक्षा जास्त", "kn": "ವಾರ್ಷಿಕ ಆದಾಯ?\n\n1 - Rs.1 ಲಕ್ಷಕ್ಕಿಂತ ಕಡಿಮೆ\n2 - Rs.1-2 ಲಕ್ಷ\n3 - Rs.2 ಲಕ್ಷಕ್ಕಿಂತ ಹೆಚ್ಚು", "ml": "വാർഷിക വരുമാനം?\n\n1 - Rs.1 ലക്ഷത്തിൽ കുറവ്\n2 - Rs.1-2 ലക്ഷം\n3 - Rs.2 ലക്ഷത്തിൽ കൂടുതൽ"}.get(lang, "Annual family income?\n\n1 - Less than Rs.1 lakh\n2 - Rs.1-2 lakh\n3 - More than Rs.2 lakh"))
             elif body == "2":
                 save_state(user, {"step": "scheme_selection"})
                 return twiml("Sorry, PM-KISAN is only for farmers.\n\n" + scheme_menu(lang))
@@ -290,21 +313,21 @@ async def whatsapp_webhook(request: Request):
                 return twiml("Sorry, Ration Card is for families earning less than Rs.2 lakh/year.\n\n" + scheme_menu(lang))
             if body in ["1", "2"]:
                 save_state(user, {"income": body, "step": "mobile"})
-                return twiml("You are eligible for Ration Card!\n\nPlease type your 10-digit mobile number.")
+                return twiml({"en": "You are eligible for Ration Card!\n\nPlease type your 10-digit mobile number.", "hi": "आप राशन कार्ड के पात्र हैं!\n\nमोबाइल नंबर भेजें।", "te": "మీరు రేషన్ కార్డ్‌కు అర్హులు!\n\nమొబైల్ నంబర్ పంపండి.", "ta": "நீங்கள் ரேஷன் கார்டுக்கு தகுதியானவர்!\n\nமொபைல் எண் அனுப்பவும்.", "mr": "तुम्ही रेशन कार्डसाठी पात्र आहात!\n\nमोबाइल नंबर पाठवा."}.get(lang, "You are eligible for Ration Card!\n\nPlease type your 10-digit mobile number."))
         else:
             if body == "3":
                 save_state(user, {"step": "scheme_selection"})
                 return twiml("Sorry, Ayushman Bharat is for families earning less than Rs.2 lakh/year.\n\n" + scheme_menu(lang))
             if body in ["1", "2"]:
                 save_state(user, {"income": body, "step": "mobile"})
-                return twiml("You are eligible for Ayushman Bharat!\n\nPlease type your 10-digit mobile number.")
+                return twiml({"en": "You are eligible for Ayushman Bharat!\n\nPlease type your 10-digit mobile number.", "hi": "आप आयुष्मान भारत के पात्र हैं!\n\nमोबाइल नंबर भेजें।", "te": "మీరు ఆయుష్మాన్ భారత్‌కు అర్హులు!\n\nమొబైల్ నంబర్ పంపండి.", "ta": "நீங்கள் ஆயுஷ்மான் பாரத்திற்கு தகுதியானவர்!\n\nமொபைல் எண் அனுப்பவும்.", "mr": "तुम्ही आयुष्मान भारतसाठी पात्र आहात!\n\nमोबाइल नंबर पाठवा."}.get(lang, "You are eligible for Ayushman Bharat!\n\nPlease type your 10-digit mobile number."))
 
     if step == "income":
         if body == "3":
             save_state(user, {"step": "scheme_selection"})
             return twiml("Sorry, income limit for PM-KISAN is Rs.2 lakh/year.\n\n" + scheme_menu(lang))
         save_state(user, {"income": body, "step": "land"})
-        return twiml("How much agricultural land?\n\n1 - Less than 2 acres\n2 - 2-5 acres\n3 - More than 5 acres")
+        return twiml({"en": "How much agricultural land?\n\n1 - Less than 2 acres\n2 - 2-5 acres\n3 - More than 5 acres", "hi": "कितनी कृषि भूमि?\n\n1 - 2 एकड़ से कम\n2 - 2-5 एकड़\n3 - 5 एकड़ से अधिक", "te": "ఎంత వ్యవసాయ భూమి?\n\n1 - 2 ఎకరాల కంటే తక్కువ\n2 - 2-5 ఎకరాలు\n3 - 5 ఎకరాలు పైన", "ta": "எவ்வளவு விவசாய நிலம்?\n\n1 - 2 ஏக்கருக்கும் குறைவு\n2 - 2-5 ஏக்கர்\n3 - 5 ஏக்கருக்கும் அதிகம்", "mr": "किती शेतजमीन?\n\n1 - 2 एकरापेक्षा कमी\n2 - 2-5 एकर\n3 - 5 एकरापेक्षा जास्त", "kn": "ಎಷ್ಟು ಕೃಷಿ ಭೂಮಿ?\n\n1 - 2 ಎಕರೆಗಿಂತ ಕಡಿಮೆ\n2 - 2-5 ಎಕರೆ\n3 - 5 ಎಕರೆಗಿಂತ ಹೆಚ್ಚು", "ml": "എത്ര കൃഷി ഭൂമി?\n\n1 - 2 ഏക്കറിൽ കുറവ്\n2 - 2-5 ഏക്കർ\n3 - 5 ഏക്കറിൽ കൂടുതൽ"}.get(lang, "How much agricultural land?\n\n1 - Less than 2 acres\n2 - 2-5 acres\n3 - More than 5 acres"))
 
     if step == "land":
         if body == "3":
@@ -312,7 +335,7 @@ async def whatsapp_webhook(request: Request):
             return twiml("Sorry, PM-KISAN is for farmers with 5 acres or less.\n\n" + scheme_menu(lang))
         save_state(user, {"land": body, "step": "mobile"})
         save_state(user, {"land": body, "step": "mobile"})
-        return twiml("You are eligible for PM-KISAN!\n\nPlease type your 10-digit mobile number.")
+        return twiml({"en": "You are eligible for PM-KISAN!\n\nPlease type your 10-digit mobile number.", "hi": "आप PM-KISAN के पात्र हैं!\n\nमोबाइल नंबर भेजें।", "te": "మీరు PM-KISAN కు అర్హులు!\n\nమొబైల్ నంబర్ పంపండి.", "ta": "நீங்கள் PM-KISAN க்கு தகுதியானவர்!\n\nமொபைல் எண் அனுப்பவும்.", "mr": "तुम्ही PM-KISAN साठी पात्र आहात!\n\nमोबाइल नंबर पाठवा."}.get(lang, "You are eligible for PM-KISAN!\n\nPlease type your 10-digit mobile number."))
     if step == "mobile":
         phone = extract_phone_from_text(body)
         if phone:

@@ -264,6 +264,59 @@ async def transcribe_voice(audio_bytes: bytes, lang: str = "hi") -> str:
         logger.error("Whisper error: %s", e)
         return ""
 
+# ── Smart voice answer resolver (for illiterate users) ───────────────────────
+def resolve_voice_to_choice(transcript: str, step: str, lang: str) -> str:
+    """Convert natural voice to menu choice number."""
+    t = transcript.lower().strip()
+
+    # YES patterns across all languages
+    yes_words = ["yes","haan","ha","haa","avunu","aamam","hou","haan ji","sari",
+                 "awa","aaw","ho","han","हाँ","हां","అవును","ஆம்","ಹೌದು","അതെ","हो","হ্যাঁ","হয়"]
+    # NO patterns
+    no_words = ["no","nahi","nahi","ledu","illai","illa","naa","nahin","না","नहीं",
+                "లేదు","இல்லை","ಇಲ್ಲ","ഇല്ല","नाही","নহয়"]
+
+    if step in ["farmer_check"]:
+        if any(w in t for w in yes_words): return "1"
+        if any(w in t for w in no_words): return "2"
+
+    if step in ["confirm_mobile","confirm_aadhaar","consent"]:
+        if any(w in t for w in yes_words): return "1"
+        if any(w in t for w in no_words): return "2"
+
+    if step == "land_check":
+        if any(w in t for w in ["chota","small","kam","less","2 se kam","chhoti","small"]): return "1"
+        if any(w in t for w in ["medium","madhyam","do se","2 se 5","beech"]): return "2"
+        if any(w in t for w in ["badi","large","5 se","zyada","jyada","big"]): return "3"
+
+    if step == "income_check":
+        if any(w in t for w in ["kam","less","chota","1 lakh se kam","garib","poor"]): return "1"
+        if any(w in t for w in ["1 lakh","2 lakh","medium","thik","madhy"]): return "2"
+        if any(w in t for w in ["zyada","jyada","amir","rich","2 lakh se","bada"]): return "3"
+
+    # Language selection by name
+    lang_names = {
+        "hindi":"1","हिंदी":"1",
+        "telugu":"2","తెలుగు":"2",
+        "tamil":"3","தமிழ்":"3",
+        "kannada":"4","ಕನ್ನಡ":"4",
+        "malayalam":"5","മലയാളം":"5",
+        "marathi":"6","मराठी":"6",
+        "bangla":"7","bengali":"7","বাংলা":"7",
+        "assamese":"8","অসমীয়া":"8",
+        "english":"9","angrezi":"9",
+    }
+    for name, num in lang_names.items():
+        if name in t: return num
+
+    # Scheme selection by name
+    if step == "scheme_selection":
+        if any(w in t for w in ["kisan","pm kisan","pmkisan","farmer"]): return "1"
+        if any(w in t for w in ["ration","rashan","card"]): return "2"
+        if any(w in t for w in ["ayushman","health","swasth","hospital"]): return "3"
+
+    return transcript  # return as-is if no match
+
 # ── Phone extraction ──────────────────────────────────────────────────────────
 def extract_phone(text: str) -> Optional[str]:
     if not text:
@@ -377,10 +430,25 @@ async def whatsapp_webhook(request: Request):
         transcript = await transcribe_voice(audio_bytes, lang)
         if transcript:
             logger.info("Voice transcript: %s", transcript)
-            # Use transcript as body for further processing
-            body = transcript
+            # Smart resolve voice to menu choice
+            resolved = resolve_voice_to_choice(transcript, step, lang)
+            logger.info("Voice resolved: %s -> %s", transcript, resolved)
+            body = resolved
             body_lower = body.lower().strip()
             append_history(phone, "user", "[Voice] " + transcript)
+            # Echo back what we heard
+            heard_msgs = {
+                "hi": f"🎤 सुना: _{transcript}_",
+                "te": f"🎤 విన్నాను: _{transcript}_",
+                "ta": f"🎤 கேட்டேன்: _{transcript}_",
+                "en": f"🎤 I heard: _{transcript}_",
+                "mr": f"🎤 ऐकले: _{transcript}_",
+                "kn": f"🎤 ಕೇಳಿದೆ: _{transcript}_",
+                "ml": f"🎤 കേட്ടു: _{transcript}_",
+                "bn": f"🎤 শুনলাম: _{transcript}_",
+                "as": f"🎤 শুনিলোঁ: _{transcript}_",
+            }
+            # We'll include heard message with next response
         else:
             return twiml(m("error", lang))
 
@@ -452,7 +520,9 @@ async def whatsapp_webhook(request: Request):
         if phone_num:
             formatted = phone_num[:4] + " " + phone_num[4:7] + " " + phone_num[7:]
             update_user(phone, {"mobile_pending": phone_num, "step": "confirm_mobile"})
-            return twiml(m("confirm_mobile", lang, phone=formatted))
+            confirm_msg = m("confirm_mobile", lang, phone=formatted)
+            logger.info(f"Mobile pending: {phone_num}, sending confirmation")
+            return twiml(confirm_msg)
         else:
             retry_msgs = {
                 "hi": "कृपया 10 अंकों का मोबाइल नंबर बोलें या टाइप करें:",
@@ -495,10 +565,25 @@ async def whatsapp_webhook(request: Request):
             # Download image
             try:
                 async with httpx.AsyncClient() as client:
+                    # Try with auth first
                     r = await client.get(media_url,
                                         auth=(TWILIO_SID, TWILIO_TOKEN),
-                                        timeout=30.0, follow_redirects=True)
+                                        timeout=60.0, follow_redirects=True)
                     image_bytes = r.content
+                    logger.info(f"[OCR] With auth: {len(image_bytes)} bytes, status={r.status_code}, content-type={r.headers.get('content-type','?')}")
+                    
+                    # If too small, try without auth
+                    if len(image_bytes) < 5000:
+                        logger.warning(f"[OCR] Small response body: {image_bytes[:200]}")
+                        r2 = await client.get(media_url, timeout=60.0, follow_redirects=True)
+                        logger.info(f"[OCR] Without auth: {len(r2.content)} bytes, status={r2.status_code}")
+                        if len(r2.content) > len(image_bytes):
+                            image_bytes = r2.content
+                    
+                    if len(image_bytes) < 5000:
+                        logger.error("[OCR] Could not download image properly")
+                        update_user(phone, {"ocr_failures": ocr_failures + 1})
+                        return twiml(m("ocr_fail", lang))
 
                 from routers.documents import run_aadhaar_ocr
                 result = run_aadhaar_ocr(image_bytes)
