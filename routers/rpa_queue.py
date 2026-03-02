@@ -146,3 +146,7 @@ def add_rpa_job(scheme, user_data, chat_id):
     threading.Thread(target=_run_rpa_job, args=(job,), daemon=True).start()
     logger.info(f"[RPA] Job queued: {job_id} scheme={scheme}")
     return job_id
+
+from fastapi import APIRouter
+router = APIRouter()
+
