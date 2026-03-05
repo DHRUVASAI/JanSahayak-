@@ -69,37 +69,37 @@ An **Agentic AI Caseworker** on Telegram and WhatsApp that:
 ### 2. AI Interview — Eligibility Check
 > Bot conducts smart interview in Telugu — income check, land size, employment status
 
-![AI Interview](screenshots/3_phone_confirm.png)
+![AI Interview](screenshots/3_ai_interview.png)
 
 ### 3. Phone Number Confirmation
 > User shares contact, bot confirms in native language
 
-![Phone Confirm](screenshots/4_aadhaar_ocr.png).
+![Phone Confirm](screenshots/4_phone_confirm.png).
 
 ### 4. Aadhaar OCR — Amazon Textract
 > User sends Aadhaar photo → AI reads name, DOB, gender, Aadhaar number automatically
 
-![Aadhaar OCR](screenshots/6_form_filled_s3.png)
+![Aadhaar OCR](screenshots/6_application_submitted.png)
 
 ### 5. Application Submitted — AWS Confirmation
 > Complete confirmation with Application ID, AWS S3 ✅, DynamoDB ✅, SNS SMS ✅
 
-![Application Submitted](screenshots/5_application_submitted.png)
+![Application Submitted](screenshots/5_aadhaar_ocr.png)
 
 ### 6. Form Filled + Stored in AWS S3
 > Screenshot of auto-filled PM-KISAN portal form, stored in Amazon S3
 
-![Form Filled](screenshots/2_ai_interview.png)
+![Form Filled](screenshots/2_scheme_menu.png)
 
 ### 7. Real SMS via Amazon SNS
 > Actual SMS received: "JanSahayak: Mee PM-KISAN darakhastu విజయవంతమైంది! ID: JSC9882A"
 
-![SMS Received](screenshots/7_sms_received.png)
+![SMS Received](screenshots/7_form_filled_s3.png)
 
 ### 8. AWS S3 Console
 > Live S3 bucket `jansahayak-vupo` storing form screenshots with AES-256 encryption
 
-![S3 Console](screenshots/8_s3_console.png)
+![S3 Console](screenshots/8_sms_received.png)
 
 ---
 
@@ -458,3 +458,8 @@ MIT License — See [LICENSE](LICENSE)
 [![Telegram](https://img.shields.io/badge/Try%20Now-@JanSahayak__bot-blue?logo=telegram&style=for-the-badge)](https://t.me/JanSahayak_bot)
 
 </div>
+
+
+### AWS Console Proof
+![AWS S3 Bucket](screenshots/9_s3_console.png)
+![AWS Billing $0 Spent](screenshots/10_aws_billing.png)
