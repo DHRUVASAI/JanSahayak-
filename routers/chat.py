@@ -166,6 +166,17 @@ def get_llm_response(conversation_history,user_message,language="en",scheme=None
     lang_name=LANGUAGE_NAMES.get(language,"English")
     system=SYSTEM_PROMPT+f"\n\nUSER LANGUAGE: {lang_name}. Every reply must be in {lang_name} only."
     if scheme: system+=f" Scheme: {scheme.upper()}."
+    # Try Amazon Bedrock first
+    try:
+        from aws_services import bedrock_llm
+        full_prompt = "\n".join([f"{m['role']}: {m['content']}" for m in conversation_history])
+        full_prompt += f"\nuser: {user_message}"
+        reply = bedrock_llm(full_prompt, system=system, max_tokens=512)
+        if reply:
+            logger.info("[Bedrock] LLM response used")
+            return reply
+    except Exception as e:
+        logger.error(f"[Bedrock] Failed, using Groq: {e}")
     import time
     for attempt in range(3):
         try:

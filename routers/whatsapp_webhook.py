@@ -36,8 +36,7 @@ if not firebase_admin._apps:
             os.getenv("FIREBASE_CREDENTIALS_PATH", "/home/ubuntu/app/firebase-credentials.json")
         )
         if not firebase_admin._apps:
-        if not firebase_admin._apps:
-        firebase_admin.initialize_app(cred)
+            firebase_admin.initialize_app(cred)
     except Exception as e:
         logger.error("Firebase init error: %s", e)
 
