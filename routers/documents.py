@@ -22,6 +22,17 @@ def detect_mime_type(image_bytes: bytes) -> str:
     else: return "image/jpeg"
 
 def run_aadhaar_ocr(image_bytes: bytes) -> dict:
+    # Try Amazon Textract first
+    try:
+        from aws_services import textract_aadhaar_ocr
+        result = textract_aadhaar_ocr(image_bytes)
+        if result.get('aadhaar') or result.get('name'):
+            import logging
+            logging.getLogger(__name__).info("[Textract] OCR success")
+            return result
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"[Textract] Failed, using Groq Vision: {e}")
     client = Groq(api_key=os.getenv("GROQ_API_KEY"))
     mime_type = detect_mime_type(image_bytes)
     image_b64 = base64.b64encode(image_bytes).decode("utf-8")
