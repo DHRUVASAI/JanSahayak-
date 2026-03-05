@@ -69,17 +69,17 @@ An **Agentic AI Caseworker** on Telegram and WhatsApp that:
 ### 2. AI Interview — Eligibility Check
 > Bot conducts smart interview in Telugu — income check, land size, employment status
 
-![AI Interview](screenshots/2_ai_interview.png)
+![AI Interview](screenshots/3_phone_confirm.png)
 
 ### 3. Phone Number Confirmation
 > User shares contact, bot confirms in native language
 
-![Phone Confirm](screenshots/3_phone_confirm.png)
+![Phone Confirm](screenshots/4_aadhaar_ocr.png).
 
 ### 4. Aadhaar OCR — Amazon Textract
 > User sends Aadhaar photo → AI reads name, DOB, gender, Aadhaar number automatically
 
-![Aadhaar OCR](screenshots/4_aadhaar_ocr.png)
+![Aadhaar OCR](screenshots/6_form_filled_s3.png)
 
 ### 5. Application Submitted — AWS Confirmation
 > Complete confirmation with Application ID, AWS S3 ✅, DynamoDB ✅, SNS SMS ✅
@@ -89,7 +89,7 @@ An **Agentic AI Caseworker** on Telegram and WhatsApp that:
 ### 6. Form Filled + Stored in AWS S3
 > Screenshot of auto-filled PM-KISAN portal form, stored in Amazon S3
 
-![Form Filled](screenshots/6_form_filled_s3.png)
+![Form Filled](screenshots/2_ai_interview.png)
 
 ### 7. Real SMS via Amazon SNS
 > Actual SMS received: "JanSahayak: Mee PM-KISAN darakhastu విజయవంతమైంది! ID: JSC9882A"
