@@ -211,6 +211,31 @@ def extract_user_data(history: list) -> dict:
             if 2 <= len(words) <= 4 and not any(kw in msg.lower() for kw in SCHEME_KEYWORDS):
                 data["name"] = msg.strip().title()
 
+    # Also extract from callback button answers stored in history
+    for m in history or []:
+        content_m = (m.get("content") or "").strip()
+        if "income_low" in content_m or "Less than 1 lakh" in content_m:
+            data["annual_income"] = "less_than_1_lakh"
+            data["monthly_income"] = "8000"
+        elif "income_mid" in content_m or "1 to 2 lakh" in content_m:
+            data["annual_income"] = "1_to_2_lakh"
+            data["monthly_income"] = "12000"
+        if "land_small" in content_m or "Less than 2 acres" in content_m:
+            if not data["land_area"]:
+                data["land_area"] = "1.5"
+        elif "land_mid" in content_m or "2 to 5 acres" in content_m:
+            if not data["land_area"]:
+                data["land_area"] = "3"
+        if "family_small" in content_m or "1 to 2 members" in content_m:
+            if not data["family_members"]:
+                data["family_members"] = "2"
+        elif "family_mid" in content_m or "3 to 4 members" in content_m:
+            if not data["family_members"]:
+                data["family_members"] = "4"
+        elif "family_large" in content_m or "5 or more members" in content_m:
+            if not data["family_members"]:
+                data["family_members"] = "6"
+
     print(f"[EXTRACT] user_data={data}")
     return data
 
@@ -235,7 +260,15 @@ async def telegram_webhook(request: Request):
 
     # ── IMAGE: Aadhaar OCR ───────────────────────────────────────────────────
     if "photo" in message:
-        await send_message(chat_id, "📸 Scanning your Aadhaar card... please wait.")
+        # Get user language for translated messages
+        _hist_lang = await get_history(user_id, limit=30)
+        _ulang = "en"
+        for _m in _hist_lang:
+            if _m.get("role") == "system" and _m.get("content", "").startswith("LANG:"):
+                _ulang = _m["content"].replace("LANG:", "").strip()
+                break
+        from routers.chat import t as _t
+        await send_message(chat_id, "📸 " + _t(_ulang, "aadhaar_scanning") if _t(_ulang, "aadhaar_scanning") != "aadhaar_scanning" else "📸 Scanning your Aadhaar card... please wait.")
         try:
             file_id     = message["photo"][-1]["file_id"]
             image_bytes = await download_file(file_id)
@@ -309,8 +342,16 @@ async def telegram_webhook(request: Request):
         await save_message(user_id, "assistant", reply)
 
         # ── Trigger RPA when form is complete ─────────────────────────────────
-        rpa_triggers = ["submit kar raha hoon", "submitting", "form submit", "jama kar raha"]
-        if any(t in reply.lower() for t in rpa_triggers):
+        rpa_triggers = [
+            "submit kar raha hoon", "submitting", "form submit", "jama kar raha",
+            "processing", "team will process", "details saved", "darakhastu prakrयalo",
+            "జమ అవుతుంది", "సమర్పించబడింది", "jama ho", "submitted successfully",
+            "application complete", "form fill", "भेज रहा हूँ", "process होगा"
+        ]
+        # Also trigger if reply contains application ID pattern
+        import re as _re
+        has_app_id = bool(_re.search(r'JSC\w+|Application ID|दरखास्त', reply))
+        if any(trigger in reply.lower() for trigger in rpa_triggers) or has_app_id:
             print("[RPA] TRIGGER MATCHED!")
             user_data = extract_user_data(history)
 

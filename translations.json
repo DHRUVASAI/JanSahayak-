@@ -43,7 +43,9 @@
     "consent_agree": "✅ I Agree",
     "consent_decline": "❌ Decline",
     "consent_declined_msg": "No problem! Come back anytime you need help.",
-    "consent_privacy_note": "🔒 Your data is safe with us."
+    "consent_privacy_note": "🔒 Your data is safe with us.",
+    "aadhaar_scanning": "Scanning your Aadhaar card... please wait.",
+    "not_eligible": "Sorry, you are not eligible for this scheme. Would you like to apply for another scheme?"
   },
   "hi": {
     "yes": "हाँ ✅",
@@ -89,7 +91,9 @@
     "consent_agree": "✅ मैं सहमत हूं",
     "consent_decline": "❌ मना करें",
     "consent_declined_msg": "कोई बात नहीं! जब जरूरत हो वापस आएं।",
-    "consent_privacy_note": "🔒 आपका डेटा सुरक्षित है।"
+    "consent_privacy_note": "🔒 आपका डेटा सुरक्षित है।",
+    "aadhaar_scanning": "आपका आधार कार्ड स्कैन हो रहा है...",
+    "not_eligible": "क्षमा करें, आप इस योजना के लिए पात्र नहीं हैं। क्या आप किसी अन्य योजना के लिए आवेदन करना चाहते हैं?"
   },
   "te": {
     "yes": "అవును ✅",
@@ -135,7 +139,9 @@
     "consent_agree": "✅ నేను అంగీకరిస్తున్నాను",
     "consent_decline": "❌ నిరాకరించు",
     "consent_declined_msg": "ఫర్వాలేదు! మళ్ళీ అవసరమైనప్పుడు రండి.",
-    "consent_privacy_note": "🔒 మీ డేటా సురక్షితం."
+    "consent_privacy_note": "🔒 మీ డేటా సురక్షితం.",
+    "aadhaar_scanning": "ఆధార్ కార్డు చదువుతున్నాను...",
+    "not_eligible": "క్షమించండి, మీరు ఈ పథకానికి అర్హులు కాదు. మరో పథకానికి దరఖాస్తు చేయాలా?"
   },
   "ta": {
     "yes": "ஆம் ✅",
@@ -181,7 +187,9 @@
     "consent_agree": "✅ நான் ஒப்புக்கொள்கிறேன்",
     "consent_decline": "❌ மறு",
     "consent_declined_msg": "பரவாயில்லை! தேவைப்படும்போது திரும்பி வாருங்கள்.",
-    "consent_privacy_note": "🔒 உங்கள் தரவு பாதுகாப்பாக உள்ளது."
+    "consent_privacy_note": "🔒 உங்கள் தரவு பாதுகாப்பாக உள்ளது.",
+    "aadhaar_scanning": "ஆதார் கார்டு படிக்கப்படுகிறது...",
+    "not_eligible": "மன்னிக்கவும், நீங்கள் இந்த திட்டத்திற்கு தகுதியற்றவர்."
   },
   "kn": {
     "yes": "ಹೌದು ✅",
@@ -227,7 +235,9 @@
     "consent_agree": "✅ ನಾನು ಒಪ್ಪುತ್ತೇನೆ",
     "consent_decline": "❌ ನಿರಾಕರಿಸು",
     "consent_declined_msg": "ಪರವಾಗಿಲ್ಲ! ಅಗತ್ಯವಿದ್ದಾಗ ಹಿಂತಿರುಗಿ.",
-    "consent_privacy_note": "🔒 ನಿಮ್ಮ ಡೇಟಾ ಸುರಕ್ಷಿತವಾಗಿದೆ."
+    "consent_privacy_note": "🔒 ನಿಮ್ಮ ಡೇಟಾ ಸುರಕ್ಷಿತವಾಗಿದೆ.",
+    "aadhaar_scanning": "ಆಧಾರ್ ಕಾರ್ಡ್ ಸ್ಕ್ಯಾನ್ ಆಗುತ್ತಿದೆ...",
+    "not_eligible": "ಕ್ಷಮಿಸಿ, ನೀವು ಈ ಯೋಜನೆಗೆ ಅರ್ಹರಲ್ಲ."
   },
   "ml": {
     "yes": "അതെ ✅",
@@ -273,7 +283,9 @@
     "consent_agree": "✅ ഞാൻ സമ്മതിക്കുന്നു",
     "consent_decline": "❌ നിരസിക്കുക",
     "consent_declined_msg": "കുഴപ്പമില്ല! ആവശ്യമുള്ളപ്പോൾ തിരിച്ചു വരൂ.",
-    "consent_privacy_note": "🔒 നിങ്ങളുടെ ഡേറ്റ സുരക്ഷിതമാണ്."
+    "consent_privacy_note": "🔒 നിങ്ങളുടെ ഡേറ്റ സുരക്ഷിതമാണ്.",
+    "aadhaar_scanning": "ആധാർ കാർഡ് സ്കാൻ ചെയ്യുന്നു...",
+    "not_eligible": "ക്ഷമിക്കണം, നിങ്ങൾ ഈ പദ്ധതിക്ക് അർഹരല്ല."
   },
   "mr": {
     "yes": "हो ✅",
@@ -319,7 +331,9 @@
     "consent_agree": "✅ मी सहमत आहे",
     "consent_decline": "❌ नाकारा",
     "consent_declined_msg": "काळजी नको! गरज असेल तेव्हा परत या.",
-    "consent_privacy_note": "🔒 तुमचा डेटा सुरक्षित आहे."
+    "consent_privacy_note": "🔒 तुमचा डेटा सुरक्षित आहे.",
+    "aadhaar_scanning": "आधार कार्ड स्कॅन होत आहे...",
+    "not_eligible": "क्षमस्व, आपण या योजनेसाठी पात्र नाही."
   },
   "as": {
     "yes": "হয় ✅",
@@ -365,7 +379,9 @@
     "consent_agree": "✅ মই সন্মত",
     "consent_decline": "❌ অস্বীকাৰ",
     "consent_declined_msg": "কোনো সমস্যা নাই! প্ৰয়োজন হ'লে উভতি আহক।",
-    "consent_privacy_note": "🔒 আপোনাৰ ডেটা সুৰক্ষিত।"
+    "consent_privacy_note": "🔒 আপোনাৰ ডেটা সুৰক্ষিত।",
+    "aadhaar_scanning": "আধাৰ কাৰ্ড স্কেন হৈছে...",
+    "not_eligible": "দুঃখিত, আপুনি এই আঁচনিৰ বাবে যোগ্য নহয়।"
   },
   "bn": {
     "yes": "হ্যাঁ ✅",
@@ -411,6 +427,8 @@
     "consent_agree": "✅ আমি সম্মত",
     "consent_decline": "❌ প্রত্যাখ্যান",
     "consent_declined_msg": "কোনো সমস্যা নেই! প্রয়োজনে ফিরে আসুন।",
-    "consent_privacy_note": "🔒 আপনার ডেটা নিরাপদ।"
+    "consent_privacy_note": "🔒 আপনার ডেটা নিরাপদ।",
+    "aadhaar_scanning": "আধার কার্ড স্ক্যান হচ্ছে...",
+    "not_eligible": "দুঃখিত, আপনি এই প্রকল্পের জন্য যোগ্য নন।"
   }
 }
