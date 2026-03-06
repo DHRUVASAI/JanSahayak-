@@ -100,7 +100,7 @@ An **Agentic AI Caseworker** on Telegram and WhatsApp that:
 ### 8. AWS S3 Console
 > Live S3 bucket `jansahayak-vupo` storing form screenshots with AES-256 encryption
 
-![S3 Console](screenshots/4_phone_confirm.png)
+![S3 Console](screenshots/9_s3_console.png)
 
 ---
 
