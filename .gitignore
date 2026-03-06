@@ -12,3 +12,10 @@ __pycache__/
 *.pyc
 *.bak
 .DS_Store
+
+# Logs
+*.log
+__pycache__/
+*.pyc
+*.bak
+.DS_Store
