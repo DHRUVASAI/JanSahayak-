@@ -1,9 +1,0 @@
-nohup: ignoring input
-127.0.0.1 - - [02/Mar/2026 00:11:04] "GET /pm_kisan.html HTTP/1.1" 200 -
-127.0.0.1 - - [02/Mar/2026 00:17:22] "GET /pm_kisan.html HTTP/1.1" 200 -
-127.0.0.1 - - [02/Mar/2026 00:30:54] "GET /pm_kisan.html HTTP/1.1" 200 -
-127.0.0.1 - - [02/Mar/2026 00:30:54] code 404, message File not found
-127.0.0.1 - - [02/Mar/2026 00:30:54] "GET /favicon.ico HTTP/1.1" 404 -
-127.0.0.1 - - [02/Mar/2026 00:31:45] "GET /pm_kisan.html HTTP/1.1" 200 -
-127.0.0.1 - - [02/Mar/2026 00:31:46] code 404, message File not found
-127.0.0.1 - - [02/Mar/2026 00:31:46] "GET /favicon.ico HTTP/1.1" 404 -

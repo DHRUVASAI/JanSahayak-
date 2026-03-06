@@ -5,3 +5,10 @@ __pycache__/
 .env
 firebase-credentials.json
 *.deb
+
+# Logs
+*.log
+__pycache__/
+*.pyc
+*.bak
+.DS_Store
