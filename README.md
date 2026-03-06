@@ -463,4 +463,4 @@ MIT License — See [LICENSE](LICENSE)
 
 ### AWS Console Proof
 ![AWS S3 Bucket](screenshots/9_s3_console.png)
-![AWS Billing $0 Spent](screenshots/10_aws_billing.png)
+
