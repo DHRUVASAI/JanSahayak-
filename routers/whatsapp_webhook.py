@@ -246,6 +246,53 @@ def m(key: str, lang: str, **kwargs) -> str:
 
 # ── Groq voice transcription ──────────────────────────────────────────────────
 async def transcribe_voice(audio_bytes: bytes, lang: str = "hi") -> str:
+    """Amazon Transcribe primary, Groq Whisper fallback."""
+    LANG_MAP = {
+        "hi": "hi-IN", "te": "te-IN", "ta": "ta-IN",
+        "kn": "kn-IN", "ml": "ml-IN", "mr": "mr-IN",
+        "bn": "bn-IN", "en": "en-IN", "as": "hi-IN"
+    }
+    transcribe_lang = LANG_MAP.get(lang, "hi-IN")
+    bucket = "jansahayak-vupo"
+    job_name = f"wa-voice-{uuid.uuid4().hex[:8]}"
+    s3_key = f"voice/{job_name}.ogg"
+
+    try:
+        import boto3, json
+        import urllib.request
+        s3 = boto3.client("s3", region_name="us-east-1")
+        transcribe = boto3.client("transcribe", region_name="us-east-1")
+
+        s3.put_object(Bucket=bucket, Key=s3_key, Body=audio_bytes)
+        s3_uri = f"s3://{bucket}/{s3_key}"
+
+        transcribe.start_transcription_job(
+            TranscriptionJobName=job_name,
+            Media={"MediaFileUri": s3_uri},
+            MediaFormat="ogg",
+            LanguageCode=transcribe_lang,
+        )
+
+        for _ in range(15):
+            time.sleep(2)
+            status = transcribe.get_transcription_job(TranscriptionJobName=job_name)
+            state = status["TranscriptionJob"]["TranscriptionJobStatus"]
+            if state == "COMPLETED":
+                uri = status["TranscriptionJob"]["Transcript"]["TranscriptFileUri"]
+                with urllib.request.urlopen(uri) as r:
+                    result = json.loads(r.read())
+                text = result["results"]["transcripts"][0]["transcript"]
+                logger.info(f"[Transcribe-WA] Success ({transcribe_lang}): {text[:60]}")
+                s3.delete_object(Bucket=bucket, Key=s3_key)
+                transcribe.delete_transcription_job(TranscriptionJobName=job_name)
+                return text
+            elif state == "FAILED":
+                logger.error("[Transcribe-WA] Job failed")
+                break
+    except Exception as e:
+        logger.error(f"[Transcribe-WA] Error: {e}")
+
+    # Fallback: Groq Whisper
     try:
         from groq import Groq
         client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -262,7 +309,7 @@ async def transcribe_voice(audio_bytes: bytes, lang: str = "hi") -> str:
         os.unlink(tmp_path)
         return result if isinstance(result, str) else result.text
     except Exception as e:
-        logger.error("Whisper error: %s", e)
+        logger.error("Whisper fallback error: %s", e)
         return ""
 
 # ── Smart voice answer resolver (for illiterate users) ───────────────────────
