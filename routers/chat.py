@@ -193,17 +193,69 @@ def get_llm_response(conversation_history,user_message,language="en",scheme=None
             return "Sorry, please try again."
     return "Sorry, please try again."
 
-def transcribe_audio(audio_bytes,language=None):
-    import tempfile
+def transcribe_audio(audio_bytes, language=None):
+    import tempfile, uuid, time, boto3, os
+    # Language code mapping for Amazon Transcribe
+    LANG_MAP = {
+        "hi": "hi-IN", "te": "te-IN", "ta": "ta-IN",
+        "kn": "kn-IN", "ml": "ml-IN", "mr": "mr-IN",
+        "bn": "bn-IN", "en": "en-IN", "as": "hi-IN"
+    }
+    transcribe_lang = LANG_MAP.get(language, "hi-IN")
+    bucket = "jansahayak-vupo"
+    job_name = f"voice-{uuid.uuid4().hex[:8]}"
+    s3_key = f"voice/{job_name}.ogg"
+
+    # Try Amazon Transcribe first
     try:
-        with tempfile.NamedTemporaryFile(suffix=".ogg",delete=False) as f:
+        s3 = boto3.client("s3", region_name="us-east-1")
+        transcribe = boto3.client("transcribe", region_name="us-east-1")
+
+        # Upload audio to S3
+        s3.put_object(Bucket=bucket, Key=s3_key, Body=audio_bytes)
+        s3_uri = f"s3://{bucket}/{s3_key}"
+
+        # Start transcription job
+        transcribe.start_transcription_job(
+            TranscriptionJobName=job_name,
+            Media={"MediaFileUri": s3_uri},
+            MediaFormat="ogg",
+            LanguageCode=transcribe_lang,
+        )
+
+        # Poll for result (max 30s)
+        for _ in range(15):
+            time.sleep(2)
+            status = transcribe.get_transcription_job(TranscriptionJobName=job_name)
+            state = status["TranscriptionJob"]["TranscriptionJobStatus"]
+            if state == "COMPLETED":
+                transcript_uri = status["TranscriptionJob"]["Transcript"]["TranscriptFileUri"]
+                import urllib.request
+                with urllib.request.urlopen(transcript_uri) as r:
+                    import json
+                    result = json.loads(r.read())
+                text = result["results"]["transcripts"][0]["transcript"]
+                logger.info(f"[Transcribe] Success: {text[:50]}")
+                # Cleanup
+                s3.delete_object(Bucket=bucket, Key=s3_key)
+                transcribe.delete_transcription_job(TranscriptionJobName=job_name)
+                return text
+            elif state == "FAILED":
+                logger.error("[Transcribe] Job failed")
+                break
+    except Exception as e:
+        logger.error(f"[Transcribe] Error: {e}")
+
+    # Fallback to Groq Whisper
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as f:
             f.write(audio_bytes); f.flush()
-            with open(f.name,"rb") as af:
-                kwargs={"file":af,"model":"whisper-large-v3"}
-                if language: kwargs["language"]=language
+            with open(f.name, "rb") as af:
+                kwargs = {"file": af, "model": "whisper-large-v3"}
+                if language: kwargs["language"] = language
                 return _get_client().audio.transcriptions.create(**kwargs).text
     except Exception as e:
-        logger.error(f"Whisper error: {e}"); return ""
+        logger.error(f"[Whisper] Error: {e}"); return ""
 
 def extract_phone_from_text(text):
     if not text:
