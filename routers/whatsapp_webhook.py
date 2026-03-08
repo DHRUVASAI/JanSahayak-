@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv("/home/ubuntu/app/.env")
 """
 routers/whatsapp_webhook.py
 JanSahayak — WhatsApp Bot via Twilio
@@ -246,84 +248,51 @@ def m(key: str, lang: str, **kwargs) -> str:
 
 # ── Groq voice transcription ──────────────────────────────────────────────────
 async def transcribe_voice(audio_bytes: bytes, lang: str = "hi") -> str:
-    """Amazon Transcribe primary, Groq Whisper fallback."""
-    LANG_MAP = {
-        "hi": "hi-IN", "te": "te-IN", "ta": "ta-IN",
-        "kn": "kn-IN", "ml": "ml-IN", "mr": "mr-IN",
-        "bn": "bn-IN", "en": "en-IN", "as": "hi-IN"
-    }
-    transcribe_lang = LANG_MAP.get(lang, "hi-IN")
-    bucket = "jansahayak-vupo"
-    job_name = f"wa-voice-{uuid.uuid4().hex[:8]}"
-    s3_key = f"voice/{job_name}.ogg"
-
+    """Groq Whisper STT — fast, under 5 seconds."""
+    import tempfile
+    from groq import Groq
+    logger.info(f"[STT] Received {len(audio_bytes)} bytes lang={lang}")
     try:
-        import boto3, json
-        import urllib.request
-        s3 = boto3.client("s3", region_name="us-east-1")
-        transcribe = boto3.client("transcribe", region_name="us-east-1")
-
-        s3.put_object(Bucket=bucket, Key=s3_key, Body=audio_bytes)
-        s3_uri = f"s3://{bucket}/{s3_key}"
-
-        transcribe.start_transcription_job(
-            TranscriptionJobName=job_name,
-            Media={"MediaFileUri": s3_uri},
-            MediaFormat="ogg",
-            LanguageCode=transcribe_lang,
-        )
-
-        for _ in range(15):
-            time.sleep(2)
-            status = transcribe.get_transcription_job(TranscriptionJobName=job_name)
-            state = status["TranscriptionJob"]["TranscriptionJobStatus"]
-            if state == "COMPLETED":
-                uri = status["TranscriptionJob"]["Transcript"]["TranscriptFileUri"]
-                with urllib.request.urlopen(uri) as r:
-                    result = json.loads(r.read())
-                text = result["results"]["transcripts"][0]["transcript"]
-                logger.info(f"[Transcribe-WA] Success ({transcribe_lang}): {text[:60]}")
-                s3.delete_object(Bucket=bucket, Key=s3_key)
-                transcribe.delete_transcription_job(TranscriptionJobName=job_name)
-                return text
-            elif state == "FAILED":
-                logger.error("[Transcribe-WA] Job failed")
-                break
-    except Exception as e:
-        logger.error(f"[Transcribe-WA] Error: {e}")
-
-    # Fallback: Groq Whisper
-    try:
-        from groq import Groq
         client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        whisper_lang = lang if lang in ["hi","te","ta","kn","ml","mr","bn","en"] else "hi"
         with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as f:
             f.write(audio_bytes)
             tmp_path = f.name
-        with open(tmp_path, "rb") as af:
-            result = client.audio.transcriptions.create(
-                model="whisper-large-v3",
-                file=("voice.ogg", af, "audio/ogg"),
-                response_format="text",
-                language=lang if lang in ["hi", "te", "ta", "kn", "ml", "mr", "bn", "en"] else "hi",
-            )
-        os.unlink(tmp_path)
-        return result if isinstance(result, str) else result.text
+        try:
+            with open(tmp_path, "rb") as af:
+                transcription = client.audio.transcriptions.create(
+                    model="whisper-large-v3",
+                    file=("voice.ogg", af, "audio/ogg"),
+                    response_format="text",
+                    language=whisper_lang,
+                )
+            if isinstance(transcription, str):
+                text = transcription
+            elif isinstance(transcription, int) or isinstance(transcription, float):
+                text = str(transcription)
+            elif hasattr(transcription, 'text'):
+                text = transcription.text
+            else:
+                text = str(transcription)
+            logger.info(f"[Whisper-WA] Success: {text[:80]}")
+            return text.strip()
+        finally:
+            os.unlink(tmp_path)
     except Exception as e:
-        logger.error("Whisper fallback error: %s", e)
+        logger.error(f"[Whisper-WA] Error: {e}")
         return ""
 
-# ── Smart voice answer resolver (for illiterate users) ───────────────────────
 def resolve_voice_to_choice(transcript: str, step: str, lang: str) -> str:
     """Convert natural voice to menu choice number."""
     t = transcript.lower().strip()
 
     # YES patterns across all languages
-    yes_words = ["yes","haan","ha","haa","avunu","aamam","hou","haan ji","sari",
-                 "awa","aaw","ho","han","हाँ","हां","అవును","ஆம்","ಹೌದು","അതെ","हो","হ্যাঁ","হয়"]
-    # NO patterns
-    no_words = ["no","nahi","nahi","ledu","illai","illa","naa","nahin","না","नहीं",
-                "లేదు","இல்லை","ಇಲ್ಲ","ഇല്ല","नाही","নহয়"]
-
+    yes_words = ["yes","haan","ha","haa","avunu","aamam","hou","haan ji","sari","awa","aaw",
+                 "ho","han","ji","bilkul","zarur","theek","sahi","haa ji","haan bhai",
+                 "हाँ","हां","हा","जी","जी हाँ","ठीक","सही","बिल्कुल","हाँ जी","हो",
+                 "అవును","ஆம்","ಹೌದు","അതെ","হ্যাঁ","হয়","हाँ भाई","okay","ok"]
+    no_words = ["no","nahi","nahin","ledu","illai","illa","naa","nahin ji","nope",
+                 "नहीं","नही","मत","na","లేదు","இல்லை","ಇಲ್ಲ","ഇല്ല","नाही","নহয়"]
     if step in ["farmer_check"]:
         if any(w in t for w in yes_words): return "1"
         if any(w in t for w in no_words): return "2"
@@ -333,16 +302,23 @@ def resolve_voice_to_choice(transcript: str, step: str, lang: str) -> str:
         if any(w in t for w in no_words): return "2"
 
     if step == "land_check":
-        if any(w in t for w in ["chota","small","kam","less","2 se kam","chhoti","small"]): return "1"
-        if any(w in t for w in ["medium","madhyam","do se","2 se 5","beech"]): return "2"
-        if any(w in t for w in ["badi","large","5 se","zyada","jyada","big"]): return "3"
-
+        if any(w in t for w in ["chota","small","kam","less","2 se kam","chhoti","thodi",
+                                 "ek ekad","ek acre","ek ekar","ekar","एकर","एकड़","एक एकड़",
+                                 "do se kam","कम","छोटी","2 से कम","एक","दो एकर","दो एकड़",
+                                 "thodi zameen","kam zameen","chhoti zameen","do ek","1"]): return "1"
+        if any(w in t for w in ["medium","madhyam","do se","2 se 5","beech","teen","char",
+                                 "दो से पांच","मध्यम","tin","chaar","do","teen ekad","2","3","4",
+                                 "do teen","panch se kam","5 se kam"]): return "2"
+        if any(w in t for w in ["badi","large","5 se","zyada","jyada","big","paanch se",
+                                 "bahut","ज़्यादा","बड़ी","पांच से","paanch","5","6","7","8",
+                                 "bahut badi","zyada zameen","jyada zameen"]): return "3"
     if step == "income_check":
-        if any(w in t for w in ["kam","less","chota","1 lakh se kam","garib","poor"]): return "1"
-        if any(w in t for w in ["1 lakh","2 lakh","medium","thik","madhy"]): return "2"
-        if any(w in t for w in ["zyada","jyada","amir","rich","2 lakh se","bada"]): return "3"
-
-    # Language selection by name
+        if any(w in t for w in ["kam","less","chota","1 lakh se kam","garib","poor",
+                                 "1 लाख से कम","कम","गरीब","ek lakh","एक लाख","1"]): return "1"
+        if any(w in t for w in ["1 lakh","2 lakh","medium","thik","madhy","do lakh",
+                                 "1 से 2","एक से दो","ठीक","मध्यम","do","2"]): return "2"
+        if any(w in t for w in ["zyada","jyada","amir","rich","2 lakh se","bada",
+                                 "2 लाख से","ज़्यादा","अमीर","बड़ा","teen lakh","3"]): return "3"
     lang_names = {
         "hindi":"1","हिंदी":"1",
         "telugu":"2","తెలుగు":"2",
@@ -357,15 +333,36 @@ def resolve_voice_to_choice(transcript: str, step: str, lang: str) -> str:
     for name, num in lang_names.items():
         if name in t: return num
 
-    # Scheme selection by name
-    if step == "scheme_selection":
-        if any(w in t for w in ["kisan","pm kisan","pmkisan","farmer"]): return "1"
-        if any(w in t for w in ["ration","rashan","card"]): return "2"
-        if any(w in t for w in ["ayushman","health","swasth","hospital"]): return "3"
+    # Scheme selection by name — always check regardless of step
+    scheme_1 = ["kisan","pm kisan","pmkisan","farmer","కిసాన్","పి యం కిసాన్","పియం కిసాన్","किसान","pm kishan","kishan","किशान","pm किसान","pm किशान","पीएम किसान"]
+    scheme_2 = ["ration","rashan","card","రేషన్","రేషన్ కార్డ్","राशन","ration card"]
+    scheme_3 = ["ayushman","health","swasth","hospital","ఆయుష్మాన్","आयुष्मान","ayushman bharat"]
+    if any(w in t for w in scheme_1): return "1"
+    if any(w in t for w in scheme_2): return "2"
+    if any(w in t for w in scheme_3): return "3"
 
     return transcript  # return as-is if no match
 
 # ── Phone extraction ──────────────────────────────────────────────────────────
+def hindi_to_digits(text: str) -> str:
+    """Convert Hindi/spoken number words to digits."""
+    word_map = {
+        "शून्य":"0","zero":"0","sifar":"0",
+        "एक":"1","ek":"1","one":"1",
+        "दो":"2","do":"2","two":"2",
+        "तीन":"3","teen":"3","three":"3",
+        "चार":"4","char":"4","four":"4",
+        "पांच":"5","paanch":"5","five":"5",
+        "छह":"6","chhe":"6","six":"6",
+        "सात":"7","saat":"7","seven":"7",
+        "आठ":"8","aath":"8","eight":"8",
+        "नौ":"9","nau":"9","nine":"9",
+    }
+    result = text
+    for word, digit in word_map.items():
+        result = result.replace(word, digit)
+    return result
+
 def extract_phone(text: str) -> Optional[str]:
     if not text:
         return None
@@ -416,10 +413,35 @@ def run_rpa(phone: str, scheme: str, user_data: dict):
         msg = success_msgs.get(lang, success_msgs["en"])
         # Send via Twilio
         _send_whatsapp(phone, msg)
+        # Send screenshot if available
+        screenshot_b64 = result.get("screenshot_b64")
+        if screenshot_b64:
+            try:
+                import boto3, base64
+                s3 = boto3.client("s3", region_name="us-east-1")
+                img_bytes = base64.b64decode(screenshot_b64)
+                s3_key = f"screenshots/{ref}.jpg"
+                s3.put_object(Bucket="jansahayak-vupo", Key=s3_key, Body=img_bytes, ContentType="image/jpeg")
+                img_url = s3.generate_presigned_url("get_object", Params={"Bucket":"jansahayak-vupo","Key":s3_key}, ExpiresIn=3600)
+                _send_whatsapp_image(phone, img_url, "📋 Your filled application form")
+                logger.info(f"[RPA] Screenshot sent")
+            except Exception as _se:
+                logger.error(f"[RPA] Screenshot error: {_se}")
         update_user(phone, {"step": "completed"})
     except Exception as e:
         logger.error("RPA error: %s", e)
         _send_whatsapp(phone, "Application received! Our team will process it shortly.")
+
+def _send_whatsapp_image(to: str, image_url: str, caption: str = ""):
+    """Send WhatsApp image via Twilio REST API."""
+    try:
+        from twilio.rest import Client
+        client = Client(TWILIO_SID, TWILIO_TOKEN)
+        to_fmt = "whatsapp:" + to if not to.startswith("whatsapp:") else to
+        client.messages.create(body=caption, from_=TWILIO_FROM, to=to_fmt, media_url=[image_url])
+        logger.info("WhatsApp image sent to %s", to)
+    except Exception as e:
+        logger.error("Twilio image send error: %s", e)
 
 def _send_whatsapp(to: str, message: str):
     """Send WhatsApp message via Twilio REST API."""
@@ -437,6 +459,7 @@ def _send_whatsapp(to: str, message: str):
 async def whatsapp_webhook(request: Request):
     try:
         form = await request.form()
+        logger.info(f"[FORM] keys={list(form.keys())}")
     except Exception as e:
         logger.error("Form parse error: %s", e)
         return twiml("Sorry, something went wrong.")
@@ -449,17 +472,61 @@ async def whatsapp_webhook(request: Request):
 
     # Normalize phone
     phone = raw_from.replace("whatsapp:", "").strip()
-    logger.info("[WA] from=%s body=%r media=%s", phone, body, num_media)
+    logger.info("[WA-RAW] " + str(dict(form)))
+    logger.info("[WA] from=%s body=%r media=%s type=%s url=%s", phone, body, num_media, media_type, media_url)
 
     user_data = get_user(phone)
     lang      = user_data.get("language", "en")
     step      = user_data.get("step", "new")
     body_lower = body.lower().strip()
 
+    # ── Handle voice messages FIRST (before restart check) ──────────────────
+    if num_media > 0 and media_url and "audio" in media_type:
+        import requests as _req
+        _resp = _req.get(media_url, auth=(TWILIO_SID, TWILIO_TOKEN), allow_redirects=True, timeout=30)
+        logger.info(f"[AUDIO] Downloaded {len(_resp.content)} bytes status={_resp.status_code}")
+        if _resp.status_code == 401:
+            # Use AccountSid from incoming message to pick correct credentials
+            _sid = form.get("AccountSid", os.getenv("TWILIO_ACCOUNT_SID"))
+            if _sid == os.getenv("TWILIO_ACCOUNT_SID_2"):
+                _tok = os.getenv("TWILIO_AUTH_TOKEN_2")
+            elif _sid == os.getenv("TWILIO_ACCOUNT_SID_3"):
+                _tok = os.getenv("TWILIO_AUTH_TOKEN_3")
+            else:
+                _tok = os.getenv("TWILIO_AUTH_TOKEN")
+            logger.info(f"[AUDIO] Retrying with fresh creds SID={_sid[:6] if _sid else 'NONE'}")
+            _resp = _req.get(media_url, auth=(_sid, _tok), allow_redirects=True, timeout=30)
+            logger.info(f"[AUDIO] Retry {len(_resp.content)} bytes status={_resp.status_code}")
+        audio_bytes = _resp.content
+        transcript = await transcribe_voice(audio_bytes, lang)
+        if transcript:
+            logger.info("Voice transcript: %s", transcript)
+            resolved = resolve_voice_to_choice(transcript, step, lang)
+            logger.info("Voice resolved: %s -> %s", transcript, resolved)
+            body = resolved
+            body_lower = body.lower().strip()
+
+    # ── Resolve typed Hindi/regional text to number choices ─────────────────
+    if num_media == 0 and body and not body.strip().isdigit():
+        text_resolved = resolve_voice_to_choice(body.strip(), step, lang)
+        if text_resolved and text_resolved != body.strip():
+            logger.info(f"[TEXT-RESOLVE] '{body}' -> '{text_resolved}' step={step}")
+            body = text_resolved
+            body_lower = body.lower().strip()
+
     # ── Handle restart keywords ───────────────────────────────────────────────
+
+    # ── Resolve typed Hindi/regional text to number ──────────────────────────
+    if num_media == 0 and body and not body.strip().isdigit():
+        _resolved = resolve_voice_to_choice(body.strip(), step, lang)
+        if _resolved and _resolved != body.strip() and _resolved.isdigit():
+            logger.info(f"[TEXT-RESOLVE] '{body}' -> '{_resolved}' step={step}")
+            body = _resolved
+            body_lower = body.lower().strip()
+
     restart_words = ["hi", "hello", "start", "restart", "namaste", "menu",
                      "నమస్కారం", "नमस्ते", "வணக்கம்", "ನಮಸ್ಕಾರ"]
-    if body_lower in restart_words or step == "new":
+    if (body_lower in restart_words or step == "new") and num_media == 0:
         db.collection("whatsapp_users").document(phone).set({
             "phone": phone, "step": "language_selection",
             "language": "en", "scheme": None, "history": [],
@@ -468,37 +535,6 @@ async def whatsapp_webhook(request: Request):
         })
         return twiml(m("welcome", "en"))
 
-    # ── Handle voice messages ─────────────────────────────────────────────────
-    if num_media > 0 and media_url and "audio" in media_type:
-        async with httpx.AsyncClient() as client:
-            r = await client.get(media_url,
-                                 auth=(TWILIO_SID, TWILIO_TOKEN),
-                                 timeout=30.0, follow_redirects=True)
-            audio_bytes = r.content
-        transcript = await transcribe_voice(audio_bytes, lang)
-        if transcript:
-            logger.info("Voice transcript: %s", transcript)
-            # Smart resolve voice to menu choice
-            resolved = resolve_voice_to_choice(transcript, step, lang)
-            logger.info("Voice resolved: %s -> %s", transcript, resolved)
-            body = resolved
-            body_lower = body.lower().strip()
-            append_history(phone, "user", "[Voice] " + transcript)
-            # Echo back what we heard
-            heard_msgs = {
-                "hi": f"🎤 सुना: _{transcript}_",
-                "te": f"🎤 విన్నాను: _{transcript}_",
-                "ta": f"🎤 கேட்டேன்: _{transcript}_",
-                "en": f"🎤 I heard: _{transcript}_",
-                "mr": f"🎤 ऐकले: _{transcript}_",
-                "kn": f"🎤 ಕೇಳಿದೆ: _{transcript}_",
-                "ml": f"🎤 കേட്ടു: _{transcript}_",
-                "bn": f"🎤 শুনলাম: _{transcript}_",
-                "as": f"🎤 শুনিলোঁ: _{transcript}_",
-            }
-            # We'll include heard message with next response
-        else:
-            return twiml(m("error", lang))
 
     # ── STEP: Language selection ──────────────────────────────────────────────
     if step == "language_selection":
@@ -564,7 +600,13 @@ async def whatsapp_webhook(request: Request):
 
     # ── STEP: Mobile collection ───────────────────────────────────────────────
     if step == "ask_mobile":
-        phone_num = extract_phone(body)
+        # Strip spaces, convert Hindi words, extract 10 digits
+        digits_only = re.sub(r"\D", "", hindi_to_digits(body))
+        if digits_only.startswith("91") and len(digits_only) == 12:
+            digits_only = digits_only[2:]
+        if len(digits_only) >= 10:
+            digits_only = digits_only[-10:]
+        phone_num = digits_only if len(digits_only) == 10 and digits_only[0] in "6789" else None
         if phone_num:
             formatted = phone_num[:4] + " " + phone_num[4:7] + " " + phone_num[7:]
             update_user(phone, {"mobile_pending": phone_num, "step": "confirm_mobile"})
@@ -603,70 +645,82 @@ async def whatsapp_webhook(request: Request):
                 update_user(phone, {"ocr_failures": 0})
                 return twiml(m("ocr_helpline", lang))
 
-            processing_msgs = {
-                "hi": "📸 आधार कार्ड स्कैन हो रहा है...",
-                "te": "📸 ఆధార్ కార్డ్ స్కాన్ అవుతోంది...",
-                "en": "📸 Scanning your Aadhaar card...",
-                "mr": "📸 आधार कार्ड स्कॅन होत आहे...",
-                "ta": "📸 ஆதார் கார்டு ஸ்கேன் செய்யப்படுகிறது...",
-            }
-            # Download image
+            # Download image with correct Twilio account credentials
             try:
-                async with httpx.AsyncClient() as client:
-                    # Try with auth first
-                    r = await client.get(media_url,
-                                        auth=(TWILIO_SID, TWILIO_TOKEN),
-                                        timeout=60.0, follow_redirects=True)
-                    image_bytes = r.content
-                    logger.info(f"[OCR] With auth: {len(image_bytes)} bytes, status={r.status_code}, content-type={r.headers.get('content-type','?')}")
-                    
-                    # If too small, try without auth
-                    if len(image_bytes) < 5000:
-                        logger.warning(f"[OCR] Small response body: {image_bytes[:200]}")
-                        r2 = await client.get(media_url, timeout=60.0, follow_redirects=True)
-                        logger.info(f"[OCR] Without auth: {len(r2.content)} bytes, status={r2.status_code}")
-                        if len(r2.content) > len(image_bytes):
-                            image_bytes = r2.content
-                    
-                    if len(image_bytes) < 5000:
-                        logger.error("[OCR] Could not download image properly")
-                        update_user(phone, {"ocr_failures": ocr_failures + 1})
-                        return twiml(m("ocr_fail", lang))
+                import requests as _req2
+                _sid = form.get("AccountSid", TWILIO_SID)
+                if _sid == os.getenv("TWILIO_ACCOUNT_SID_2"):
+                    _tok = os.getenv("TWILIO_AUTH_TOKEN_2")
+                elif _sid == os.getenv("TWILIO_ACCOUNT_SID_3"):
+                    _tok = os.getenv("TWILIO_AUTH_TOKEN_3")
+                else:
+                    _tok = TWILIO_TOKEN
+                _r = _req2.get(media_url, auth=(_sid, _tok), timeout=60, allow_redirects=True)
+                image_bytes = _r.content
+                logger.info(f"[OCR] Downloaded {len(image_bytes)} bytes status={_r.status_code}")
+            except Exception as _de:
+                logger.error(f"[OCR] Download error: {_de}")
+                update_user(phone, {"ocr_failures": ocr_failures + 1})
+                return twiml(m("ocr_fail", lang))
 
-                from routers.documents import run_aadhaar_ocr
+            if len(image_bytes) < 5000:
+                logger.error(f"[OCR] Image too small: {len(image_bytes)} bytes")
+                update_user(phone, {"ocr_failures": ocr_failures + 1})
+                return twiml(m("ocr_fail", lang))
+
+            # Run OCR
+            try:
+                from routers.documents import run_aadhaar_ocr, mask_aadhaar
                 result = run_aadhaar_ocr(image_bytes)
                 name   = result.get("name", "")
                 dob    = result.get("dob", "")
                 gender = result.get("gender", "")
-
-                if name:
-                    masked = result.get("aadhaar_masked") or result.get("aadhaar_masked", "XXXX XXXX ****")
-                    update_user(phone, {
-                        "aadhaar_data": result,
-                        "name": name, "dob": dob, "gender": gender,
-                        "state": result.get("state", ""),
-                        "district": result.get("district", ""),
-                        "pincode": result.get("pincode", ""),
-                        "aadhaar_masked": masked,
-                        "ocr_failures": 0,
-                        "step": "confirm_aadhaar",
-                    })
-                    ocr_confirm = {
-                        "hi": "✅ आधार स्कैन हो गया!\n\n👤 नाम: " + name + "\n📅 जन्म: " + dob + "\n⚧ लिंग: " + gender + "\n🔢 आधार: " + masked + "\n\nक्या यह सही है?\n1 - हाँ\n2 - नहीं, दोबारा भेजें",
-                        "te": "✅ ఆధార్ స్కాన్ అయింది!\n\n👤 పేరు: " + name + "\n📅 జన్మ: " + dob + "\n⚧ లింగం: " + gender + "\n🔢 ఆధార్: " + masked + "\n\nఇది సరైనదా?\n1 - అవును\n2 - కాదు, మళ్ళీ పంపండి",
-                        "en": "✅ Aadhaar scanned!\n\n👤 Name: " + name + "\n📅 DOB: " + dob + "\n⚧ Gender: " + gender + "\n🔢 Aadhaar: " + masked + "\n\nIs this correct?\n1 - Yes\n2 - No, resend",
-                        "mr": "✅ आधार स्कॅन झाले!\n\n👤 नाव: " + name + "\n📅 जन्म: " + dob + "\n⚧ लिंग: " + gender + "\n🔢 आधार: " + masked + "\n\nहे बरोबर आहे का?\n1 - होय\n2 - नाही, पुन्हा पाठवा",
-                        "ta": "✅ ஆதார் ஸ்கேன் ஆனது!\n\n👤 பெயர்: " + name + "\n📅 பிறந்த தேதி: " + dob + "\n⚧ பாலினம்: " + gender + "\n🔢 ஆதார்: " + masked + "\n\nசரியா?\n1 - ஆம்\n2 - இல்லை, மீண்டும் அனுப்பு",
-                    }
-                    return twiml(ocr_confirm.get(lang, ocr_confirm["en"]))
-                else:
-                    update_user(phone, {"ocr_failures": ocr_failures + 1})
-                    return twiml(m("ocr_fail", lang))
-
-            except Exception as e:
-                logger.error("OCR error: %s", e)
-                update_user(phone, {"ocr_failures": user_data.get("ocr_failures", 0) + 1})
+                raw_aadhaar = result.get("aadhaar", "")
+                masked = mask_aadhaar(raw_aadhaar) if raw_aadhaar else result.get("aadhaar_masked", "XXXX XXXX ****")
+                logger.info(f"[OCR] Result: name={name} dob={dob} masked={masked}")
+            except Exception as _oe:
+                logger.error(f"[OCR] OCR error: {_oe}")
+                update_user(phone, {"ocr_failures": ocr_failures + 1})
                 return twiml(m("ocr_fail", lang))
+
+            if name:
+                update_user(phone, {
+                    "aadhaar_data": result,
+                    "name": name, "dob": dob, "gender": gender,
+                    "state": result.get("state", ""),
+                    "district": result.get("district", ""),
+                    "pincode": result.get("pincode", ""),
+                    "address": result.get("address", ""),
+                    "aadhaar_masked": masked,
+                    "ocr_failures": 0,
+                    "step": "confirm_aadhaar",
+                })
+                confirm_msgs = {
+                    "hi": f"✅ आधार सत्यापित!\n\n👤 नाम: {name}\n📅 जन्म: {dob}\n⚧ लिंग: {gender}\n🔢 आधार: {masked}\n\nक्या यह सही है?\n1 - हाँ\n2 - नहीं",
+                    "te": f"✅ ఆధార్ ధృవీకరించబడింది!\n\n👤 పేరు: {name}\n📅 జన్మ: {dob}\n🔢 ఆధార్: {masked}\n\nఇది సరైనదా?\n1 - అవును\n2 - కాదు",
+                    "ta": f"✅ ஆதார் சரிபார்க்கப்பட்டது!\n\n👤 பெயர்: {name}\n📅 பிறந்த தேதி: {dob}\n🔢 ஆதார்: {masked}\n\nசரியா?\n1 - ஆம்\n2 - இல்லை",
+                    "en": f"✅ Aadhaar verified!\n\n👤 Name: {name}\n📅 DOB: {dob}\n⚧ Gender: {gender}\n🔢 Aadhaar: {masked}\n\nIs this correct?\n1 - Yes\n2 - No",
+                    "mr": f"✅ आधार सत्यापित!\n\n👤 नाव: {name}\n📅 जन्म: {dob}\n🔢 आधार: {masked}\n\nहे बरोबर आहे का?\n1 - होय\n2 - नाही",
+                    "kn": f"✅ ಆಧಾರ್ ಪರಿಶೀಲಿಸಲಾಗಿದೆ!\n\n👤 ಹೆಸರು: {name}\n📅 ಜನ್ಮ: {dob}\n🔢 ಆಧಾರ್: {masked}\n\nಸರಿಯಾಗಿದೆಯೇ?\n1 - ಹೌದು\n2 - ಇಲ್ಲ",
+                    "ml": f"✅ ആധാർ സ്ഥിരീകരിച്ചു!\n\n👤 പേര്: {name}\n📅 ജനനം: {dob}\n🔢 ആധാർ: {masked}\n\nശരിയാണോ?\n1 - അതെ\n2 - ഇല്ല",
+                    "bn": f"✅ আধার যাচাই হয়েছে!\n\n👤 নাম: {name}\n📅 জন্ম: {dob}\n🔢 আধার: {masked}\n\nএটা কি সঠিক?\n1 - হ্যাঁ\n2 - না",
+                    "as": f"✅ আধাৰ যাচাই হ'ল!\n\n👤 নাম: {name}\n📅 জন্ম: {dob}\n🔢 আধাৰ: {masked}\n\nসঠিক নেকি?\n1 - হয়\n2 - নহয়",
+                }
+                return twiml(confirm_msgs.get(lang, confirm_msgs["en"]))
+            else:
+                update_user(phone, {"ocr_failures": ocr_failures + 1})
+                fail_msgs = {
+                    "hi": "❌ आधार साफ़ नहीं दिखा। सामने की तरफ की साफ़ फोटो भेजें।",
+                    "te": "❌ ఆధార్ స్పష్టంగా కనిపించలేదు. ముందు వైపు స్పష్టమైన ఫోటో పంపండి.",
+                    "ta": "❌ ஆதார் தெளிவாக தெரியவில்லை. முன் பக்க தெளிவான படம் அனுப்பவும்.",
+                    "en": "❌ Could not read Aadhaar. Please send a clear front-side photo in good lighting.",
+                    "mr": "❌ आधार नीट दिसले नाही. समोरच्या बाजूचा स्पष्ट फोटो पाठवा.",
+                    "kn": "❌ ಆಧಾರ್ ಸ್ಪಷ್ಟವಾಗಿ ಕಾಣಿಸಲಿಲ್ಲ. ಮುಂಭಾಗದ ಫೋಟೋ ಕಳುಹಿಸಿ.",
+                    "ml": "❌ ആധാർ വ്യക്തമായി കണ്ടില്ല. മുൻഭാഗത്തിന്റെ വ്യക്തമായ ഫോട്ടോ അയക്കൂ.",
+                    "bn": "❌ আধার স্পষ্ট দেখা যায়নি। সামনের দিকের স্পষ্ট ছবি পাঠান।",
+                    "as": "❌ আধাৰ স্পষ্টকৈ দেখা নগ'ল। সামনৰ ফালৰ স্পষ্ট ফটো পঠাওক।",
+                }
+                return twiml(fail_msgs.get(lang, fail_msgs["en"]))
         else:
             return twiml(m("ask_aadhaar", lang))
 
@@ -687,7 +741,17 @@ async def whatsapp_webhook(request: Request):
             update_user(phone, {"step": "ask_aadhaar", "ocr_failures": 0})
             return twiml(m("ask_aadhaar", lang))
         else:
-            return twiml(m("error", lang))
+            # Re-show confirmation
+            ud = get_user(phone)
+            masked = ud.get("aadhaar_masked","")
+            name = ud.get("name","")
+            dob = ud.get("dob","")
+            gender = ud.get("gender","")
+            confirm_msgs = {
+                "hi": f"✅ आधार सत्यापित!\n\n👤 नाम: {name}\n📅 जन्म: {dob}\n⚧ लिंग: {gender}\n🔢 आधार: {masked}\n\nक्या यह सही है?\n1 - हाँ\n2 - नहीं",
+                "en": f"✅ Aadhaar verified!\n\n👤 Name: {name}\n📅 DOB: {dob}\n🔢 Aadhaar: {masked}\n\nIs this correct?\n1 - Yes\n2 - No",
+            }
+            return twiml(confirm_msgs.get(lang, confirm_msgs["en"]))
 
     # ── STEP: Final consent + RPA trigger ────────────────────────────────────
     if step == "consent":

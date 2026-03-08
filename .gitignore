@@ -19,3 +19,13 @@ __pycache__/
 *.pyc
 *.bak
 .DS_Store
+__pycache__/
+*.pyc
+*.pyo
+nohup.out
+1
+PM
+Warning:
+.env
+*.pem
+venv/

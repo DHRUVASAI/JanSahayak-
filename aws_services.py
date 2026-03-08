@@ -101,59 +101,166 @@ def _groq_fallback(prompt: str, system: str) -> str:
         return "Sorry, service temporarily unavailable."
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Amazon Textract — Aadhaar OCR (replaces Groq Vision)
+# Amazon Textract + LLaMA Hybrid Aadhaar OCR
 # ══════════════════════════════════════════════════════════════════════════════
+INDIAN_STATES = {
+    'andhra pradesh','arunachal pradesh','assam','bihar','chhattisgarh',
+    'goa','gujarat','haryana','himachal pradesh','jharkhand','karnataka',
+    'kerala','madhya pradesh','maharashtra','manipur','meghalaya','mizoram',
+    'nagaland','odisha','punjab','rajasthan','sikkim','tamil nadu','telangana',
+    'tripura','uttar pradesh','uttarakhand','west bengal','delhi','jammu',
+    'kashmir','ladakh','puducherry','chandigarh','andaman','nicobar',
+    'dadra','daman','lakshadweep'
+}
+
+def _is_likely_name(text: str) -> bool:
+    import re
+    t = text.strip().lower()
+    if not t or len(t) < 3: return False
+    if any(k in t for k in [
+        'street','road','nagar','colony','ward','village','post','dist',
+        'pin','state','near','opp','plot','flat','house','floor','door',
+        'mandal','taluk','tehsil','block','sector','phase','layout',
+        's/o','d/o','w/o','c/o','h/no','vill','po ','government','india',
+        'unique','authority','uidai','enrollment','enrolment'
+    ]): return False
+    for s in INDIAN_STATES:
+        if s in t: return False
+    if re.search(r'\d', t): return False
+    if len(t.split()) > 5: return False
+    alpha_ratio = sum(c.isalpha() or c == ' ' for c in t) / max(len(t), 1)
+    if alpha_ratio < 0.85: return False
+    return True
+
+def _llama_parse_aadhaar(raw_text: str) -> dict:
+    import json, re, boto3
+    prompt = """You are an Aadhaar card parser. Extract fields from this OCR text.
+IMPORTANT: 
+- name = person full name ONLY (e.g. "Ramu Yadav"). NOT state, district, village, or address words.
+- dob = DD/MM/YYYY format
+- gender = MALE or FEMALE
+- aadhaar = 12 digit number
+- address = full address
+- state = Indian state from address
+- district = district from address  
+- pincode = 6 digit PIN
+
+Return ONLY valid JSON, no explanation.
+
+OCR TEXT:
+""" + raw_text + """
+
+JSON:"""
+    try:
+        bedrock = boto3.client('bedrock-runtime', region_name='us-east-1')
+        body = json.dumps({
+            "prompt": f"<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n",
+            "max_gen_len": 400, "temperature": 0.0,
+        })
+        response = bedrock.invoke_model(
+            modelId="us.meta.llama3-3-70b-instruct-v1:0",
+            body=body, contentType="application/json", accept="application/json"
+        )
+        text = json.loads(response['body'].read()).get('generation', '')
+        match = re.search(r'\{.*?\}', text, re.DOTALL)
+        if match:
+            parsed = json.loads(match.group())
+            logger.info(f"[LLaMA-OCR] name={parsed.get('name','?')}, state={parsed.get('state','?')}")
+            return parsed
+    except Exception as e:
+        logger.error(f"[LLaMA-OCR] Failed: {e}")
+    return {}
+
+def _groq_vision_ocr(img_bytes: bytes) -> dict:
+    import base64, json, re
+    try:
+        from groq import Groq
+        client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        b64 = base64.b64encode(img_bytes).decode()
+        response = client.chat.completions.create(
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            messages=[{"role": "user", "content": [
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
+                {"type": "text", "text": "Extract from Aadhaar: name (person name ONLY not state/address), dob (DD/MM/YYYY), gender, aadhaar (12 digits), address, state, district, pincode. Return ONLY JSON."}
+            ]}],
+            max_tokens=400, temperature=0.0
+        )
+        text = response.choices[0].message.content
+        match = re.search(r'\{.*?\}', text, re.DOTALL)
+        if match:
+            result = json.loads(match.group())
+            result['source'] = 'groq_vision'
+            logger.info(f"[Groq-Vision] name={result.get('name','?')}")
+            return result
+    except Exception as e:
+        logger.error(f"[Groq-Vision] Failed: {e}")
+    return {}
+
 def textract_aadhaar_ocr(img_bytes: bytes) -> dict:
-    """Extract Aadhaar data using Amazon Textract. Falls back to Groq Vision."""
+    """Hybrid OCR: Textract raw text -> LLaMA semantic parse -> Groq Vision fallback -> Regex last resort."""
+    import re
+    raw_lines = []
+
+    # Stage 1: Textract raw extraction
     try:
         response = _textract().analyze_document(
-            Document={'Bytes': img_bytes},
-            FeatureTypes=['FORMS', 'TABLES']
+            Document={'Bytes': img_bytes}, FeatureTypes=['FORMS', 'TABLES']
         )
-        
-        # Extract key-value pairs
         blocks = response.get('Blocks', [])
-        text_blocks = [b['Text'] for b in blocks if b['BlockType'] == 'LINE' and 'Text' in b]
-        full_text = ' '.join(text_blocks)
-        logger.info(f"[Textract] Extracted {len(text_blocks)} lines")
-        
-        # Parse Aadhaar fields from extracted text
-        import re
-        result = {}
-        
-        # Aadhaar number (12 digits)
-        aadhaar_match = re.search(r'\b(\d{4}\s?\d{4}\s?\d{4})\b', full_text)
-        if aadhaar_match:
-            result['aadhaar'] = aadhaar_match.group(1).replace(' ', '')
-        
-        # DOB
-        dob_match = re.search(r'(\d{2}/\d{2}/\d{4})', full_text)
-        if dob_match:
-            result['dob'] = dob_match.group(1)
-        
-        # Gender
-        if 'MALE' in full_text.upper():
-            result['gender'] = 'MALE'
-        elif 'FEMALE' in full_text.upper():
-            result['gender'] = 'FEMALE'
-        
-        # Name (line before DOB usually)
-        for i, line in enumerate(text_blocks):
-            if 'DOB' in line.upper() or 'BIRTH' in line.upper():
-                if i > 0:
-                    result['name'] = text_blocks[i-1].strip()
-                break
-        
-        if result.get('aadhaar') or result.get('name'):
-            logger.info(f"[Textract] OCR success: {result.get('name','?')}")
-            result['source'] = 'textract'
-            return result
-        else:
-            raise ValueError("Textract could not extract Aadhaar fields")
-            
+        raw_lines = [b['Text'] for b in blocks if b['BlockType'] == 'LINE' and 'Text' in b]
+        logger.info(f"[Textract] Extracted {len(raw_lines)} lines: {raw_lines[:5]}")
     except Exception as e:
-        logger.error(f"[Textract] OCR failed, falling back to Groq Vision: {e}")
-        return {}  # caller will use Groq Vision fallback
+        logger.error(f"[Textract] Failed: {e}")
+
+    # Stage 2: LLaMA semantic parsing
+    if len(raw_lines) > 3:
+        full_text = '\n'.join(raw_lines)
+        result = _llama_parse_aadhaar(full_text)
+        if result.get('aadhaar'):
+            if not _is_likely_name(result.get('name', '')):
+                logger.warning(f"[Hybrid-OCR] Bad name from LLaMA: '{result.get('name')}' — filtering")
+                for line in raw_lines:
+                    if _is_likely_name(line):
+                        result['name'] = line.strip()
+                        logger.info(f"[Hybrid-OCR] Corrected name: {result['name']}")
+                        break
+            # Extra blocklist for known junk names
+            JUNK_NAMES = ["THE WORK", "GOVERNMENT OF INDIA", "UIDAI", "UNIQUE IDENTIFICATION",
+                          "INCOME TAX", "INDIA", "AUTHORITY", "AADHAAR", "AADHAR", "YOUR NAME",
+                          "NAME", "DOB", "MALE", "FEMALE", "ADDRESS"]
+            if result.get('name', '').upper().strip() in JUNK_NAMES:
+                logger.warning(f"[Hybrid-OCR] Junk name blocked: '{result.get('name')}'")
+                result['name'] = None
+                for line in raw_lines:
+                    if _is_likely_name(line) and line.upper().strip() not in JUNK_NAMES:
+                        result['name'] = line.strip()
+                        logger.info(f"[Hybrid-OCR] Replaced with: {result['name']}")
+                        break
+            result['source'] = 'textract+llama'
+            logger.info(f"[Hybrid-OCR] SUCCESS name={result.get('name')} aadhaar=****{result.get('aadhaar','')[-4:]}")
+            return result
+
+    # Stage 3: Groq Vision fallback
+    logger.info("[Hybrid-OCR] Trying Groq Vision fallback")
+    result = _groq_vision_ocr(img_bytes)
+    if result.get('aadhaar') or result.get('name'):
+        return result
+
+    # Stage 4: Regex last resort (never return empty)
+    logger.warning("[Hybrid-OCR] Using regex last resort")
+    result = {'source': 'regex_fallback'}
+    full_text = ' '.join(raw_lines)
+    m = re.search(r'\b(\d{4}\s?\d{4}\s?\d{4})\b', full_text)
+    if m: result['aadhaar'] = m.group(1).replace(' ', '')
+    m = re.search(r'(\d{2}/\d{2}/\d{4})', full_text)
+    if m: result['dob'] = m.group(1)
+    if 'MALE' in full_text.upper(): result['gender'] = 'MALE'
+    elif 'FEMALE' in full_text.upper(): result['gender'] = 'FEMALE'
+    for line in raw_lines:
+        if _is_likely_name(line):
+            result['name'] = line.strip()
+            break
+    return result
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Amazon Transcribe — Voice to Text (alongside Groq Whisper)

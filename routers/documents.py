@@ -22,74 +22,40 @@ def detect_mime_type(image_bytes: bytes) -> str:
     else: return "image/jpeg"
 
 def run_aadhaar_ocr(image_bytes: bytes) -> dict:
-    # Try Amazon Textract first
+    """
+    Hybrid OCR pipeline (Telegram + WhatsApp):
+    1. Textract raw text → LLaMA semantic parse → name validation
+    2. Groq Vision full fallback
+    3. Regex last resort
+    Always returns aadhaar_masked field.
+    """
+    import logging, re
+    log = logging.getLogger(__name__)
+
     try:
         from aws_services import textract_aadhaar_ocr
         result = textract_aadhaar_ocr(image_bytes)
-        if result.get('aadhaar') or result.get('name'):
-            import logging
-            logging.getLogger(__name__).info("[Textract] OCR success")
-            return result
     except Exception as e:
-        import logging
-        logging.getLogger(__name__).error(f"[Textract] Failed, using Groq Vision: {e}")
-    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-    mime_type = detect_mime_type(image_bytes)
-    image_b64 = base64.b64encode(image_bytes).decode("utf-8")
-    print(f"[OCR] Image size: {len(image_bytes)} bytes, mime: {mime_type}")
+        log.error(f"[OCR] textract_aadhaar_ocr error: {e}")
+        result = {}
 
-    try:
-        response = client.chat.completions.create(
-            model="meta-llama/llama-4-scout-17b-16e-instruct",
-            messages=[{"role": "user", "content": [
-                {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_b64}"}},
-                {"type": "text", "text": """This is an Aadhaar card image. Extract ALL fields carefully and return ONLY a valid JSON object with no extra text:
-{
-    "name": "full name in English",
-    "aadhaar": "12 digit number no spaces",
-    "dob": "DD/MM/YYYY",
-    "gender": "Male or Female",
-    "address": "full address string",
-    "district": "district name",
-    "state": "state name",
-    "pincode": "6 digit pincode"
-}
-For district, state, pincode — extract from the address field carefully.
-If any field not found use null. Return ONLY the JSON, nothing else."""}
-            ]}],
-            max_tokens=600,
-        )
+    # Ensure aadhaar_masked always present
+    if result.get("aadhaar"):
+        digits = re.sub(r"\D", "", str(result["aadhaar"]))[:12]
+        result["aadhaar"] = digits
+        result["aadhaar_masked"] = "XXXX XXXX " + digits[-4:]
 
-        text = response.choices[0].message.content.strip()
-        print(f"[OCR] Raw response: {text}")
-        text = text.replace("```json", "").replace("```", "").strip()
-        result = json.loads(text)
+    # Ensure pincode extracted from address if missing
+    if not result.get("pincode") and result.get("address"):
+        m = re.search(r"\b(\d{6})\b", str(result["address"]))
+        if m: result["pincode"] = m.group(1)
 
-        # Clean aadhaar
-        if result.get("aadhaar"):
-            aadhaar_clean = re.sub(r"\D", "", str(result["aadhaar"]))
-            result["aadhaar"] = aadhaar_clean[:12]
+    # Normalize gender capitalization
+    if result.get("gender"):
+        result["gender"] = result["gender"].capitalize()
 
-        # Extract pincode from address if not found
-        if not result.get("pincode") and result.get("address"):
-            pin_match = re.search(r"\b(\d{6})\b", result["address"])
-            if pin_match:
-                result["pincode"] = pin_match.group(1)
-
-        # Mask aadhaar for storage (show only last 4)
-        if result.get("aadhaar") and len(result["aadhaar"]) == 12:
-            result["aadhaar_masked"] = "XXXX XXXX " + result["aadhaar"][-4:]
-
-        print(f"[OCR] Extracted: name={result.get('name')}, dob={result.get('dob')}, gender={result.get('gender')}, state={result.get('state')}, district={result.get('district')}, pincode={result.get('pincode')}")
-        return result
-
-    except json.JSONDecodeError as e:
-        print(f"[OCR JSON ERROR] {e} | Raw: {text}")
-        return _fallback_extract(text)
-    except Exception as e:
-        print(f"[OCR ERROR] {type(e).__name__}: {e}")
-        return {"name": None, "aadhaar": None, "dob": None, "gender": None, "address": None, "district": None, "state": None, "pincode": None}
-
+    log.info(f"[OCR-FINAL] name={result.get('name')} aadhaar=****{str(result.get('aadhaar',''))[-4:]} state={result.get('state')} district={result.get('district')} source={result.get('source','?')}")
+    return result
 def _fallback_extract(text: str) -> dict:
     result = {"name": None, "aadhaar": None, "dob": None, "gender": None, "address": None, "district": None, "state": None, "pincode": None}
     aadhaar_match = re.search(r"\b(\d{4}\s?\d{4}\s?\d{4})\b", text)

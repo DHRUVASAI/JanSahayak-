@@ -3,9 +3,15 @@ import firebase_admin
 from firebase_admin import credentials
 from dotenv import load_dotenv
 
-# ✅ Load .env FIRST before anything else
 from pathlib import Path
 load_dotenv(dotenv_path=Path(__file__).parent / ".env")
+
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(name)s] %(levelname)s %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
@@ -20,16 +26,19 @@ from routers import rpa_queue
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    cred_path = os.getenv("FIREBASE_CREDENTIALS")
-    if cred_path and os.path.exists(cred_path):
-        try:
-            cred = credentials.Certificate(cred_path)
-            firebase_admin.initialize_app(cred)
-            print("✅ Successfully connected to Firebase!")
-        except Exception as e:
-            print(f"❌ Error initializing Firebase: {e}")
+    if not firebase_admin._apps:
+        cred_path = os.getenv("FIREBASE_CREDENTIALS")
+        if cred_path and os.path.exists(cred_path):
+            try:
+                cred = credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred)
+                print("Successfully connected to Firebase!")
+            except Exception as e:
+                print(f"Error initializing Firebase: {e}")
+        else:
+            print("Warning: Firebase credentials not found.")
     else:
-        print("⚠️ Firebase credentials not found.")
+        print("Firebase already initialized (by router import)")
     yield
 
 
@@ -41,8 +50,8 @@ app = FastAPI(
 )
 
 import os as _os
-_os.makedirs("/home/ubuntu/app/static", exist_ok=True)
-app.mount("/static", StaticFiles(directory="/home/ubuntu/app/static"), name="static")
+_os.makedirs("static", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 app.add_middleware(
@@ -56,7 +65,6 @@ app.add_middleware(
 app.include_router(telegram_webhook.router)
 app.include_router(whatsapp_webhook.router)
 app.include_router(rpa_queue.router)
-# app.include_router(chat.router)  # chat.py has no router in new version
 app.include_router(documents.router)
 app.include_router(applications.router)
 app.include_router(schemes.router)
