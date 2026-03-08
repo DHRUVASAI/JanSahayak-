@@ -79,7 +79,7 @@ An **Agentic AI Caseworker** on Telegram and WhatsApp that:
 ### 4. Aadhaar OCR — Amazon Textract
 > User sends Aadhaar photo → AI reads name, DOB, gender, Aadhaar number automatically
 
-![Aadhaar OCR](screenshots/5_aadhaar_ocr.png)
+![Aadhaar OCR](4_phone_confirm.png)
 
 
 ### 5. Application Submitted — AWS Confirmation
