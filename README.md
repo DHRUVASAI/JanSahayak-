@@ -1,185 +1,95 @@
-# JanSahayak Backend (Day 1 MVP)
+# 🌾 JanSahayak (जनसहायक) — National Welfare Schemes Assistant
 
-This backend implements the initial FastAPI skeleton for the JanSahayak project, aligned with `requirements.md`.
+JanSahayak is an AI-powered, multi-lingual welfare assistant designed to help citizens (especially in rural India) check eligibility, complete documents, and apply for government schemes using a conversational interface (both Web Chat and Telegram Bot).
 
-## File / Endpoint → Requirement Mapping
+---
 
-- `main.py`
-  - **REQ-ARCH-001**: Python + FastAPI backend
-  - **REQ-ARCH-011**: API exposure via HTTP
-  - **REQ-DEV-006**: OpenAPI/Swagger auto-generated docs
-  - **REQ-PERF-011**, **REQ-DEPLOY-013**: `/health` endpoint for uptime checks
+## ✨ Features
+1. **Interactive Multilingual Assistant**: Fully conversational in 9 Indian languages (English, Hindi, Telugu, Tamil, Marathi, Malayalam, Kannada, Bengali, and Assamese) with direct audio/text inputs.
+2. **Automatic Aadhaar OCR (Llama 3.2 Vision)**: Real-time Aadhaar image extraction, processing, and info parsing. Sensitive details (e.g. Aadhaar numbers) are masked securely (`XXXX XXXX 1234`) before database storage.
+3. **Machine Learning Classifier (NSAP)**: A multi-class Random Forest model that evaluates demographic and socio-economic variables to instantly align BPL applicants with the appropriate National Social Assistance Programme pension schemes (IGNOAPS, IGNWPS, IGNDPS, NFBS, Annapurna).
+4. **End-to-End RPA Selenium Pipeline**: Runs background headless Chrome operators to dynamically fill welfare forms in real-time on government portals, capture confirmation screenshots, and save progress statuses to Firestore.
 
-- `webhook.py`
-  - **REQ-UI-001**: WhatsApp message handling (via Twilio webhook)
-  - **REQ-INT-001**: WhatsApp Business API integration
+---
 
-- `routers/chat.py`
-  - `/api/v1/chat/message` (POST)
-    - **REQ-UI-001**: Text chat handling
-    - **REQ-INT-001**: WhatsApp Business API integration
-    - **REQ-NLU-001**: Intent recognition placeholder
-  - `/api/v1/chat/voice` (POST)
-    - **REQ-UI-011**, **REQ-LANG-006**, **REQ-INT-002**: Bhashini voice processing (stub)
-  - `/api/v1/chat/image` (POST)
-    - **REQ-UI-002**, **REQ-DOC-001**, **REQ-INT-003**: Textract-based OCR (stub)
-  - `/api/v1/chat/history/{userId}` (GET)
-    - **REQ-DATA-002**, **REQ-ARCH-006**: Firestore history (stub)
-  - `/api/v1/chat/session/{sessionId}` (DELETE)
-    - **REQ-NLU-003**, **REQ-DATA-010**: Session/context cleanup (stub)
+## 📷 Screenshots Gallery
 
-- `routers/documents.py`
-  - `/api/v1/document/upload` (POST)
-    - **REQ-DOC-001**, **REQ-DATA-003**, **REQ-ARCH-008**, **REQ-INT-003**
-  - `/api/v1/document/textract` (POST)
-    - **REQ-DOC-001**, **REQ-DOC-011**, **REQ-INT-003**
-  - `/api/v1/document/verify/{documentId}` (GET)
-    - **REQ-DOC-007**, **REQ-DOC-008**, **REQ-GOV-001**
-  - `/api/v1/document/validate` (POST)
-    - **REQ-DOC-008**, **REQ-GOV-001**, **REQ-INT-008**
-  - `/api/v1/document/{documentId}` (DELETE)
-    - **REQ-SEC-001**, **REQ-SEC-002**, **REQ-DOC-010**
+| 🌐 JanSahayak Authentication | 💬 Multi-lingual Conversation |
+|:---:|:---:|
+| ![Login Panel](screenshots/media__1783792703648.png) | ![Aadhaar Summary](screenshots/media__1783793207158.png) |
 
-- `routers/applications.py`
-  - `/api/v1/application/submit` (POST)
-    - **REQ-GOV-001**, **REQ-GOV-004**, **REQ-INT-006**, **REQ-INT-008**
-  - `/api/v1/application/status/{applicationId}` (GET)
-    - **REQ-GOV-011**, **REQ-GOV-013**
-  - `/api/v1/application/history/{userId}` (GET)
-    - **REQ-DATA-006**, **REQ-DATA-011**
-  - `/api/v1/application/appeal` (POST)
-    - **REQ-GOV-015**
-  - `/api/v1/application/receipt/{applicationId}` (GET)
-    - **REQ-GOV-014**
+| 📄 Document Upload & OCR | ⚙️ Automated RPA Portal Verification |
+|:---:|:---:|
+| ![Drag & Drop Upload](screenshots/media__1783754810815.png) | ![RPA Screen Capture](screenshots/media__1783765813340.png) |
 
-- `routers/schemes.py`
-  - `/api/v1/schemes/list` (GET)
-    - **REQ-DATA-006**, **REQ-SUCCESS-015**
-  - `/api/v1/schemes/{schemeId}` (GET)
-    - **REQ-DATA-006**, **REQ-DATA-009**
-  - `/api/v1/schemes/eligibility` (POST)
-    - **REQ-DATA-010**, **REQ-NLU-001**
-  - `/api/v1/schemes/search` (GET)
-    - **REQ-DATA-010**, **REQ-SUCCESS-015**
-  - `/api/v1/schemes/recommendations/{userId}` (GET)
-    - **REQ-DATA-010**, **REQ-SUCCESS-015**
+---
 
-- `models/user.py` (`UserProfile`)
-  - **REQ-DATA-001** – Firebase Authentication user profile
-  - **REQ-DATA-002** – Firestore schema
-  - **REQ-ARCH-006** – Database model alignment
+## 🛠️ Architecture & Tech Stack
 
-- `models/application.py` (`ApplicationRecord`)
-  - **REQ-GOV-011**, **REQ-DATA-006**, **REQ-ARCH-006**
+```mermaid
+graph TD
+    User([User Client]) -->|Web Chat / Telegram| API[FastAPI Server]
+    API -->|Prompt & Context| LLM[IBM Watsonx / Groq Fallback]
+    API -->|Aadhaar Image| Vision[Llama-3.2-11b-Vision OCR]
+    API -->|Socio-Economic Data| ML[NSAP Random Forest Classifier]
+    API -->|Confirm & Submit| Queue[RPA Worker Queue]
+    Queue -->|Chrome Automation| Selenium[Selenium Web Driver]
+    Selenium -->|Submit Application| Portal[Mock Govt Welfare Portal]
+    Selenium -->|Proof Screen Capture| COS[S3 / IBM Cloud Object Storage]
+```
 
-- `models/message.py` (`ChatMessage`)
-  - **REQ-UI-001**, **REQ-INT-001**, **REQ-NLU-001**
+### Backend & Databases
+* **FastAPI**: Main high-performance API routing layer.
+* **Google Firestore**: Secure, real-time application database for user profiles, session steps, conversation histories, and RPA states.
+* **IBM Cloud Object Storage (COS / S3)**: Cloud repository for uploaded Aadhaar card attachments and operator confirmation screenshots.
 
-- `services/`
-  - Placeholder for business logic services
-  - Will host integrations for Bhashini, Textract, Firebase, RPA agents
+### Artificial Intelligence & Models
+* **IBM Watsonx.ai**: Powers natural language conversations (using `ibm/granite-3-3-8b-instruct` / Granite 3.3).
+* **Llama 3.2 Vision (`llama-3.2-11b-vision-preview`)**: Handles real-time image OCR for demographic field extraction.
+* **Random Forest Multi-Class Model (`nsap_model.joblib`)**: Predicts eligibility parameters and NSAP scheme selections.
 
-## API Route Tree (Day 1)
+---
 
-Base URL: `/`
+## 🚀 Getting Started
 
-- `GET /health`
-- `POST /webhook` — Twilio WhatsApp webhook (echo via chat processor)
-
-API v1:
-
-- `/api/v1/chat`
-  - `POST /api/v1/chat/message`
-  - `POST /api/v1/chat/voice`
-  - `POST /api/v1/chat/image`
-  - `GET /api/v1/chat/history/{userId}`
-  - `DELETE /api/v1/chat/session/{sessionId}`
-
-- `/api/v1/document`
-  - `POST /api/v1/document/upload`
-  - `POST /api/v1/document/textract`
-  - `GET /api/v1/document/verify/{documentId}`
-  - `POST /api/v1/document/validate`
-  - `DELETE /api/v1/document/{documentId}`
-
-- `/api/v1/application`
-  - `POST /api/v1/application/submit`
-  - `GET /api/v1/application/status/{applicationId}`
-  - `GET /api/v1/application/history/{userId}`
-  - `POST /api/v1/application/appeal`
-  - `GET /api/v1/application/receipt/{applicationId}`
-
-- `/api/v1/schemes`
-  - `GET /api/v1/schemes/list`
-  - `GET /api/v1/schemes/{schemeId}`
-  - `POST /api/v1/schemes/eligibility`
-  - `GET /api/v1/schemes/search`
-  - `GET /api/v1/schemes/recommendations/{userId}`
-
-## Day 1 MVP Scope
-
-**Working behavior**
-
-- `/health` returns a simple JSON health check.
-- `/webhook` accepts Twilio WhatsApp POST (form field `Body`) and:
-  - wraps the payload into a `ChatMessage`
-  - calls the shared `process_text_message` in `routers/chat.py`
-  - returns TwiML XML with an `Echo: <message>` response
-- `/api/v1/chat/message` returns the same echo response as JSON.
-
-**Stubbed / to be implemented**
-
-- Voice handling (`/api/v1/chat/voice`) – Bhashini ASR + TTS
-- Image/document handling (`/api/v1/chat/image`, `/api/v1/document/*`) – Textract + validation
-- Application submission and tracking (`/api/v1/application/*`)
-- Scheme search and recommendations (`/api/v1/schemes/*`)
-- Firebase integrations for user profiles, history, documents
-- Security (auth, RBAC, rate limiting) and analytics hooks
-
-## Setup Instructions
-
-From `backend/` directory:
-
+### 1. Requirements
+Install dependencies using virtualenv:
 ```bash
+python -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
 ```
 
-Then open Swagger UI:
+### 2. Setup Environment Variables
+Create a `.env` file in the root directory:
+```env
+# Watsonx Credentials
+IBM_WATSONX_API_KEY=your_watsonx_api_key
+IBM_WATSONX_PROJECT_ID=your_watsonx_project_id
+IBM_WATSONX_URL=https://eu-gb.ml.cloud.ibm.com
 
-```text
-http://localhost:8000/docs
+# LLM Fallback & Vision Keys
+GROQ_API_KEY=your_groq_api_key
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+
+# Firebase Credentials
+FIREBASE_CRED=firebase-credentials.json
 ```
 
-You should see all routes defined above.
-
-## Twilio + ngrok (WhatsApp Sandbox)
-
-1. Start the backend:
-
+### 3. Running the Project
+Train the NSAP classifier model:
 ```bash
-uvicorn main:app --reload --port 8000
+python train_nsap_model.py
 ```
 
-2. Start `ngrok` tunnel:
-
+Start the FastAPI backend:
 ```bash
-ngrok http 8000
+uvicorn main:app --port 8000 --reload
 ```
 
-3. In Twilio Console → Messaging → Try it out → Send a WhatsApp message:
-   - Join the sandbox as instructed by Twilio.
-   - Set the **Webhook URL** to:
-
-   ```text
-   https://YOUR_NGROK_URL/webhook
-   ```
-
-   - Method: `POST`
-
-4. Send a message to the WhatsApp sandbox number — you should receive:
-
-```text
-Echo: <your message>
+Run the Telegram Bot listener:
+```bash
+python polling_bot.py
 ```
 
+Load **[http://localhost:8000/](http://localhost:8000/)** in your browser to try out the interface!
