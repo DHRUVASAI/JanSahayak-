@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JanSahayak - National Schemes Portal</title>
+    <meta name="description" content="Official assistant portal for Indian citizens to verify eligibility and apply for welfare schemes.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Simple Intro Sequence Overlay -->
+    <div class="intro-overlay" id="introOverlay">
+        <div class="intro-content">
+            <div class="intro-logo">
+                <i class="fa-solid fa-hands-holding-child"></i>
+            </div>
+            <h1 class="intro-title">JanSahayak</h1>
+            <p class="intro-subtitle">National Schemes Assistant Portal</p>
+            <div class="intro-loader"></div>
+        </div>
+    </div>
+
+    <!-- Login / signup selection modal -->
+    <div class="modal-overlay" id="authModal" style="display: flex;">
+        <div class="modal-content" style="max-width: 420px; margin: auto;">
+            <header class="panel-header" style="border-top-left-radius: 8px; border-top-right-radius: 8px;">
+                <div class="panel-title">
+                    <i class="fa-solid fa-user-shield" style="color: var(--gov-blue);"></i>
+                    <span>JanSahayak Authentication</span>
+                </div>
+            </header>
+            <div class="modal-body" style="padding: 1.5rem; text-align: center;">
+                <p style="font-size: 0.9rem; color: var(--text-dark); margin-bottom: 1.5rem; line-height: 1.4;">
+                    Welcome to the National Schemes Portal. Please log in or choose to continue:
+                </p>
+                <div class="auth-options" style="text-align: left;">
+                    <div style="border: 1px solid var(--border-color); padding: 1rem; border-radius: 6px; margin-bottom: 1.25rem; background: #fafbfc;">
+                        <label for="authPhone" style="font-size: 0.8rem; font-weight: 600; color: var(--gov-blue); display: block; margin-bottom: 0.45rem;">
+                            Log In / Register via Mobile Number
+                        </label>
+                        <input type="text" id="authPhone" placeholder="Enter 10-digit mobile number" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 0.75rem; text-align: center; font-size: 0.9rem; outline: none;">
+                        <button class="keyboard-btn" style="width: 100%; background: var(--gov-blue); color: #fff; border-color: var(--gov-blue); padding: 0.5rem; font-weight: 600;" onclick="loginWithPhone()">Verify & Continue</button>
+                    </div>
+                    <div style="text-align: center;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.75rem; font-weight: 500;">— OR —</span>
+                        <button class="keyboard-btn" style="width: 100%; padding: 0.5rem; font-weight: 600; color: var(--text-dark);" onclick="continueAsGuest()">Continue as Guest</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Official Government Header -->
+    <header class="gov-header">
+        <div class="gov-header-container">
+            <div class="logo-container">
+                <i class="fa-solid fa-hands-holding-child logo-icon"></i>
+                <div class="logo-text-block">
+                    <span class="logo-title">JanSahayak (जनसहायक)</span>
+                    <span class="logo-subtitle">Government of India • Ministry of Social Justice</span>
+                </div>
+            </div>
+            
+            <nav class="gov-nav">
+                <button class="nav-btn active" id="btn-chat" onclick="switchTab('chat')">
+                    <i class="fa-regular fa-comments"></i> Apply & Chat
+                </button>
+                <button class="nav-btn" id="btn-dashboard" onclick="switchTab('dashboard')">
+                    <i class="fa-solid fa-file-invoice"></i> Track Applications
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="app-container">
+        <main class="main-content">
+            
+            <!-- Left Column: Chat Assistant -->
+            <section class="panel chat-panel" id="chatSection">
+                <header class="panel-header">
+                    <div class="panel-title">
+                        <i class="fa-regular fa-message" style="color: #0b4d83;"></i>
+                        <span>Eligibility & Registration Assistant</span>
+                    </div>
+                    <span class="status-indicator">
+                        <i class="fa-solid fa-circle" style="color: #2e7d32; font-size: 0.6rem;"></i> Connected
+                    </span>
+                </header>
+
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Chat bubbles loaded dynamically -->
+                </div>
+
+                <footer class="chat-input-bar">
+                    <button class="action-btn mic-btn" id="micBtn" onclick="toggleRecording()" title="Record Voice">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+                    <input type="text" class="input-box" id="userInput" placeholder="Type your answer here..." onkeypress="handleKeyPress(event)">
+                    <button class="action-btn send-btn" onclick="sendMessage()" title="Send Message">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </footer>
+            </section>
+
+            <!-- Right Column: Recent Applications Dashboard -->
+            <section class="panel dashboard-panel" id="dashboardSection">
+                <header class="panel-header">
+                    <div class="panel-title">
+                        <i class="fa-solid fa-folder-open" style="color: #0b4d83;"></i>
+                        <span>Submitted Applications</span>
+                    </div>
+                    <button onclick="refreshApplications()" class="action-btn refresh-btn" title="Refresh list">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                    </button>
+                </header>
+
+                <div class="dashboard-content" id="dashboardContent">
+                    <!-- Cards populated by javascript -->
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Live Operator Modal -->
+    <div class="modal-overlay" id="rpaModal" onclick="closeRpaModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <header class="panel-header">
+                <div class="panel-title">
+                    <i class="fa-solid fa-robot" style="color: #0b4d83;"></i>
+                    <span>RPA Submission Screenshot</span>
+                </div>
+                <button onclick="closeRpaModal()" class="action-btn">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </header>
+            <div class="modal-body">
+                <p style="font-size: 0.85rem; color: #475569; margin-bottom: 1rem;">
+                    RPA execution snapshot on the mock portal.
+                </p>
+                <img src="" id="rpaScreenshot" class="rpa-screenshot-img" alt="RPA Snapshot">
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+    <script>
+        // Smooth intro sequence fade-out
+        setTimeout(() => {
+            const overlay = document.getElementById('introOverlay');
+            if (overlay) {
+                overlay.classList.add('fade-out');
+                setTimeout(() => overlay.remove(), 800);
+            }
+        }, 2200);
+    </script>
+</body>
+</html>

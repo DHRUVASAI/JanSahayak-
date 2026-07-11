@@ -1,0 +1,10 @@
+.env
+*.pem
+__pycache__/
+venv/
+*.log
+static/app_JS*.png
+*.bak
+test_results.txt
+generate_notebook.py
+firebase-credentials.json

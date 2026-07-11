@@ -1,0 +1,29 @@
+# Exclude local virtual environment
+venv/
+.venv/
+env/
+
+# Exclude git metadata
+.git/
+.gitignore
+
+# Exclude credentials and environment files (must be injected via Code Engine secrets/env)
+.env
+firebase-credentials.json
+*.pem
+
+# Exclude python build artifacts and cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Exclude IDE folders
+.vscode/
+.idea/
+
+# Exclude logs and temporary files
+*.log
+scratch/
+test_results.txt

@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PM-KISAN Portal | Pradhan Mantri Kisan Samman Nidhi Yojana</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --ink: #0a0e1a;
+      --surface: #111827;
+      --panel: #1a2233;
+      --border: #1e2d45;
+      --accent: #00d4aa;
+      --accent-dim: rgba(0, 212, 170, 0.12);
+      --accent-glow: rgba(0, 212, 170, 0.35);
+      --success: #10b981;
+      --text-primary: #e8edf5;
+      --text-secondary: #7a8fab;
+      --text-muted: #4a5a70;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: #f1f4f9;
+      color: #1a2233;
+    }
+
+    /* ── RPA OVERLAY ── */
+    #rpa-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      background: rgba(5, 8, 18, 0.80);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    #rpa-overlay.active {
+      display: flex;
+    }
+
+    #rpa-panel {
+      width: 500px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(0, 212, 170, 0.07), 0 40px 90px rgba(0, 0, 0, 0.65), 0 0 80px rgba(0, 212, 170, 0.04);
+    }
+
+    /* title bar */
+    #rpa-titlebar {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tl-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .tl {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+    }
+
+    .tl-r {
+      background: #ff5f56;
+    }
+
+    .tl-y {
+      background: #febc2e;
+    }
+
+    .tl-g {
+      background: #27c93f;
+    }
+
+    #rpa-wintitle {
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      color: var(--text-secondary);
+      margin-left: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    #rpa-wintitle em {
+      color: var(--accent);
+      font-style: normal;
+    }
+
+    .live-pill {
+      margin-left: auto;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid rgba(0, 212, 170, 0.2);
+      font-family: var(--mono);
+      font-size: 0.66rem;
+      padding: 3px 9px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      letter-spacing: 0.5px;
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: blink 1.4s ease infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    /* body */
+    #rpa-body {
+      padding: 22px 22px 0;
+    }
+
+    .rpa-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .rpa-icon {
+      width: 42px;
+      height: 42px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(0, 212, 170, 0.18);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .rpa-meta h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.2px;
+    }
+
+    .rpa-meta p {
+      font-size: 0.76rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* progress */
+    .prog-track {
+      height: 2px;
+      background: var(--border);
+      border-radius: 1px;
+      margin-bottom: 18px;
+      overflow: hidden;
+    }
+
+    #prog-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), #00ffc8);
+      border-radius: 1px;
+      transition: width 0.6s cubic-bezier(.4, 0, .2, 1);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    /* steps */
+    #rpa-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      margin-bottom: 16px;
+    }
+
+    .rs {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 7px;
+      border: 1px solid transparent;
+      opacity: 0.28;
+      transition: all 0.35s ease;
+    }
+
+    .rs.vis {
+      opacity: 0.5;
+    }
+
+    .rs.run {
+      opacity: 1;
+      background: var(--accent-dim);
+      border-color: rgba(0, 212, 170, 0.14);
+    }
+
+    .rs.ok {
+      opacity: 0.65;
+    }
+
+    .rs-num {
+      font-family: var(--mono);
+      font-size: 0.63rem;
+      color: var(--text-muted);
+      width: 16px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .rs.run .rs-num {
+      color: var(--accent);
+    }
+
+    .rs.ok .rs-num {
+      color: var(--success);
+    }
+
+    .rs-lbl {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      flex: 1;
+      font-weight: 400;
+    }
+
+    .rs.run .rs-lbl {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .rs-tag {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .rs.run .rs-tag {
+      background: rgba(0, 212, 170, 0.1);
+      color: var(--accent);
+      border-color: rgba(0, 212, 170, 0.2);
+    }
+
+    .rs.ok .rs-tag {
+      background: rgba(16, 185, 129, 0.08);
+      color: var(--success);
+      border-color: rgba(16, 185, 129, 0.15);
+    }
+
+    /* terminal log */
+    #rpa-log {
+      background: var(--ink);
+      border-top: 1px solid var(--border);
+      padding: 12px 14px;
+      height: 58px;
+      overflow: hidden;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+    }
+
+    .ll {
+      color: var(--text-muted);
+      line-height: 1.65;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .ll.on {
+      opacity: 1;
+    }
+
+    .lc-t {
+      color: #4a5a70;
+    }
+
+    .lc-m {
+      color: #5a8fd0;
+    }
+
+    .lc-ok {
+      color: var(--accent);
+    }
+
+    .lc-v {
+      color: #e8c97a;
+    }
+
+    /* footer */
+    #rpa-foot {
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      padding: 13px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .foot-info {
+      font-family: var(--mono);
+      font-size: 0.66rem;
+      color: var(--text-muted);
+    }
+
+    .foot-info b {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    #rpa-view-btn {
+      display: none;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 7px 16px;
+      border-radius: 7px;
+      font-family: var(--sans);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: box-shadow 0.2s, transform 0.1s;
+    }
+
+    #rpa-view-btn:hover {
+      box-shadow: 0 0 20px var(--accent-glow);
+      transform: translateY(-1px);
+    }
+
+    /* ── CURSOR ── */
+    #rpa-cursor {
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      background: var(--accent);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      display: none;
+      box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.22), 0 0 14px var(--accent-glow);
+      transform: translate(-50%, -50%);
+      transition: transform 0.1s;
+    }
+
+    #rpa-cursor.click {
+      transform: translate(-50%, -50%) scale(0.6);
+      box-shadow: 0 0 0 6px rgba(0, 212, 170, 0.12), 0 0 22px var(--accent-glow);
+    }
+
+    #rpa-trail {
+      position: fixed;
+      width: 26px;
+      height: 26px;
+      border: 1.5px solid rgba(0, 212, 170, 0.35);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      display: none;
+      transform: translate(-50%, -50%);
+      transition: left 0.09s ease, top 0.09s ease;
+    }
+
+    .f-active {
+      outline: 2px solid var(--accent) !important;
+      outline-offset: 2px;
+      background: rgba(0, 212, 170, 0.03) !important;
+    }
+
+    /* ── PORTAL ── */
+    #gov-bar {
+      background: #1a2d5a;
+      color: #b8c8e8;
+      text-align: center;
+      padding: 7px;
+      font-size: 0.77rem;
+      letter-spacing: 0.3px;
+    }
+
+    #hdr {
+      background: #fff;
+      border-bottom: 4px solid #f97316;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    #hdr-logo {
+      width: 52px;
+      height: 52px;
+      background: #1a2d5a;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.45rem;
+    }
+
+    #hdr-txt h1 {
+      color: #1a2d5a;
+      font-size: 1.12rem;
+      font-weight: 700;
+    }
+
+    #hdr-txt .sub {
+      color: #555;
+      font-size: 0.8rem;
+      margin-top: 1px;
+    }
+
+    #hdr-txt .hindi {
+      color: #999;
+      font-size: 0.73rem;
+      margin-top: 1px;
+    }
+
+    .flag {
+      margin-left: auto;
+      width: 38px;
+      height: 25px;
+      background: linear-gradient(to bottom, #FF9933 33.3%, #fff 33.3% 66.6%, #138808 66.6%);
+      border: 1px solid #ddd;
+    }
+
+    nav {
+      background: #1a3a6e;
+      display: flex;
+    }
+
+    nav a {
+      color: #aac4e8;
+      padding: 11px 20px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    nav a:hover,
+    nav a.active {
+      background: #f97316;
+      color: #fff;
+    }
+
+    #demo-banner {
+      background: #fffbeb;
+      border-bottom: 1px solid #fde68a;
+      padding: 9px 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.82rem;
+      color: #78350f;
+    }
+
+    #run-btn {
+      margin-left: auto;
+      background: #1a3a6e;
+      color: #fff;
+      border: none;
+      padding: 7px 18px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: background 0.15s;
+    }
+
+    #run-btn:hover {
+      background: #0f2550;
+    }
+
+    .run-dot {
+      width: 6px;
+      height: 6px;
+      background: #00d4aa;
+      border-radius: 50%;
+    }
+
+    main {
+      max-width: 820px;
+      margin: 24px auto;
+      padding: 0 16px 48px;
+    }
+
+    .bc {
+      font-size: 0.78rem;
+      color: #888;
+      margin-bottom: 14px;
+    }
+
+    .bc a {
+      color: #1a3a6e;
+      text-decoration: none;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+    }
+
+    .card-hdr {
+      background: linear-gradient(135deg, #1a2d5a, #1a3a6e);
+      padding: 20px 24px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .card-icon {
+      width: 42px;
+      height: 42px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .card-hdr h2 {
+      font-size: 1.08rem;
+      font-weight: 600;
+    }
+
+    .card-hdr p {
+      font-size: 0.77rem;
+      opacity: 0.7;
+      margin-top: 2px;
+    }
+
+    .alert {
+      background: #fffbeb;
+      border-left: 4px solid #f59e0b;
+      padding: 11px 18px;
+      font-size: 0.82rem;
+      color: #78350f;
+      display: flex;
+      gap: 9px;
+    }
+
+    .fb {
+      padding: 24px;
+    }
+
+    .sec {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #1a3a6e;
+      border-bottom: 2px solid #f97316;
+      padding-bottom: 7px;
+      margin: 22px 0 16px;
+    }
+
+    .sec:first-child {
+      margin-top: 0;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 13px;
+    }
+
+    .row.full {
+      grid-template-columns: 1fr;
+    }
+
+    .fg {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    label {
+      font-size: 0.79rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    label .r {
+      color: #ef4444;
+    }
+
+    input,
+    select {
+      padding: 9px 11px;
+      border: 1px solid #d1d9e6;
+      border-radius: 6px;
+      font-size: 0.87rem;
+      color: #1a2233;
+      background: #fff;
+      font-family: var(--sans);
+      transition: border-color 0.15s, box-shadow 0.15s;
+      width: 100%;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #1a3a6e;
+      box-shadow: 0 0 0 3px rgba(26, 58, 110, 0.1);
+    }
+
+    .hint {
+      font-size: 0.72rem;
+      color: #94a3b8;
+    }
+
+    .ig {
+      display: flex;
+    }
+
+    .ig input {
+      border-radius: 6px 0 0 6px;
+    }
+
+    .btn-otp {
+      background: #1a3a6e;
+      color: #fff;
+      border: none;
+      padding: 9px 13px;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.79rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .btn-otp:hover {
+      background: #0f2550;
+    }
+
+    .card-foot {
+      padding: 16px 24px;
+      background: #f8fafc;
+      border-top: 1px solid #e9edf3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-reset {
+      background: #fff;
+      color: #64748b;
+      border: 1px solid #d1d9e6;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 0.87rem;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .btn-reset:hover {
+      border-color: #94a3b8;
+    }
+
+    .btn-sub {
+      background: #1a3a6e;
+      color: #fff;
+      border: none;
+      padding: 11px 28px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.2px;
+      box-shadow: 0 4px 14px rgba(26, 58, 110, 0.25);
+      transition: all 0.15s;
+    }
+
+    .btn-sub:hover {
+      background: #0f2550;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(26, 58, 110, 0.35);
+    }
+
+    #success {
+      display: none;
+      margin-bottom: 18px;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      border-radius: 8px;
+      padding: 18px 22px;
+      text-align: center;
+    }
+
+    #success.on {
+      display: block;
+    }
+
+    #success h3 {
+      color: #065f46;
+      font-size: 0.98rem;
+      margin-bottom: 5px;
+    }
+
+    #success .ref {
+      font-family: var(--mono);
+      font-size: 1.12rem;
+      font-weight: 600;
+      color: #059669;
+    }
+
+    #success p {
+      font-size: 0.81rem;
+      color: #047857;
+      margin-top: 4px;
+    }
+
+    @media(max-width:600px) {
+      .row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="rpa-cursor"></div>
+  <div id="rpa-trail"></div>
+
+  <!-- RPA OVERLAY -->
+  <div id="rpa-overlay">
+    <div id="rpa-panel">
+      <div id="rpa-titlebar">
+        <div class="tl-dots">
+          <div class="tl tl-r"></div>
+          <div class="tl tl-y"></div>
+          <div class="tl tl-g"></div>
+        </div>
+        <div id="rpa-wintitle">jansahayak / <em>rpa-agent</em> — pm_kisan_fill.py</div>
+        <div class="live-pill">
+          <div class="live-dot"></div>LIVE
+        </div>
+      </div>
+      <div id="rpa-body">
+        <div class="rpa-meta-row">
+          <div class="rpa-icon">⚙️</div>
+          <div class="rpa-meta">
+            <h2>Automated Form Submission</h2>
+            <p>Selenium RPA &nbsp;·&nbsp; PM-KISAN Portal &nbsp;·&nbsp; Triggered via WhatsApp</p>
+          </div>
+        </div>
+        <div class="prog-track">
+          <div id="prog-fill"></div>
+        </div>
+        <div id="rpa-steps">
+          <div class="rs" id="s1"><span class="rs-num">01</span><span class="rs-lbl">Parsing WhatsApp conversation
+              state</span><span class="rs-tag">pending</span></div>
+          <div class="rs" id="s2"><span class="rs-num">02</span><span class="rs-lbl">Launching Selenium
+              WebDriver</span><span class="rs-tag">pending</span></div>
+          <div class="rs" id="s3"><span class="rs-num">03</span><span class="rs-lbl">Injecting personal &amp; Aadhaar
+              fields</span><span class="rs-tag">pending</span></div>
+          <div class="rs" id="s4"><span class="rs-num">04</span><span class="rs-lbl">Resolving address &amp; land
+              records</span><span class="rs-tag">pending</span></div>
+          <div class="rs" id="s5"><span class="rs-num">05</span><span class="rs-lbl">Writing bank account
+              details</span><span class="rs-tag">pending</span></div>
+          <div class="rs" id="s6"><span class="rs-num">06</span><span class="rs-lbl">Submitting form &amp; awaiting
+              response</span><span class="rs-tag">pending</span></div>
+          <div class="rs" id="s7"><span class="rs-num">07</span><span class="rs-lbl">Capturing reference ID →
+              Firebase</span><span class="rs-tag">pending</span></div>
+        </div>
+        <div id="rpa-log">
+          <div class="ll" id="l1"></div>
+          <div class="ll" id="l2"></div>
+          <div class="ll" id="l3"></div>
+        </div>
+      </div>
+      <div id="rpa-foot">
+        <div class="foot-info">agent_id: <b>jsk-rpa-001</b> &nbsp;·&nbsp; model: <b>gemini-1.5-flash</b></div>
+        <button id="rpa-view-btn" onclick="closeRPA()">View Filled Form →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PORTAL -->
+  <div id="gov-bar">भारत सरकार &nbsp;|&nbsp; Government of India — Ministry of Agriculture &amp; Farmers Welfare</div>
+  <div id="hdr">
+    <div id="hdr-logo">🌾</div>
+    <div id="hdr-txt">
+      <h1>PM-KISAN Portal</h1>
+      <div class="sub">Pradhan Mantri Kisan Samman Nidhi Yojana</div>
+      <div class="hindi">प्रधानमंत्री किसान सम्मान निधि योजना — किसानों के लिए ₹6000 वार्षिक सहायता</div>
+    </div>
+    <div class="flag"></div>
+  </div>
+  <nav>
+    <a href="#">Home</a><a href="#" class="active">New Registration</a>
+    <a href="#">Beneficiary Status</a><a href="#">Edit Aadhaar Failure</a><a href="#">Contact Us</a>
+  </nav>
+  <div id="demo-banner">
+    <span>🔬</span><strong>Demo Mode</strong> — JanSahayak RPA Agent will auto-fill this form with WhatsApp-collected
+    farmer data
+    <button id="run-btn" onclick="startDemo()"><span class="run-dot"></span>Run RPA Agent</button>
+  </div>
+
+  <main>
+    <div class="bc"><a href="#">Home</a> › <a href="#">Farmer Corner</a> › <strong>New Farmer Registration</strong>
+    </div>
+    <div id="success">
+      <h3>✅ Application Submitted Successfully</h3>
+      <div class="ref" id="ref-id">—</div>
+      <p>Confirmation SMS dispatched to registered mobile. Processing within 3–5 working days.</p>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-icon">👨‍🌾</div>
+        <div>
+          <h2>New Farmer Registration Form</h2>
+          <p>नया किसान पंजीकरण &nbsp;|&nbsp; Please fill all mandatory fields marked with *</p>
+        </div>
+      </div>
+      <div class="alert"><span>⚠️</span><span><strong>Important:</strong> Aadhaar number is mandatory. Ensure your
+          mobile number is linked with Aadhaar for OTP verification.</span></div>
+      <div class="fb">
+        <div class="sec">👤 Personal Details / व्यक्तिगत विवरण</div>
+        <div class="row">
+          <div class="fg"><label for="full_name">Full Name (as per Aadhaar) <span class="r">*</span></label><input
+              type="text" id="full_name" placeholder="Enter full name"></div>
+          <div class="fg"><label for="gender">Gender / लिंग <span class="r">*</span></label><select id="gender">
+              <option value="">— Select —</option>
+              <option value="male">Male / पुरुष</option>
+              <option value="female">Female / महिला</option>
+              <option value="other">Other / अन्य</option>
+            </select></div>
+        </div>
+        <div class="row">
+          <div class="fg"><label for="dob">Date of Birth <span class="r">*</span></label><input type="text" id="dob"
+              placeholder="DD/MM/YYYY"></div>
+          <div class="fg"><label for="category">Category / वर्ग</label><select id="category">
+              <option value="general">General</option>
+              <option value="sc">SC</option>
+              <option value="st">ST</option>
+              <option value="obc">OBC</option>
+            </select></div>
+        </div>
+        <div class="sec">🪪 Aadhaar Details / आधार विवरण</div>
+        <div class="row">
+          <div class="fg"><label for="aadhaar">Aadhaar Number <span class="r">*</span></label>
+            <div class="ig"><input type="text" id="aadhaar" placeholder="XXXX XXXX XXXX" maxlength="14"><button
+                class="btn-otp" onclick="verifyOTP()">Verify OTP</button></div><span class="hint">Enter 12-digit Aadhaar
+              number</span>
+          </div>
+          <div class="fg"><label for="mobile">Mobile (Aadhaar linked) <span class="r">*</span></label><input type="text"
+              id="mobile" placeholder="+91 XXXXX XXXXX"></div>
+        </div>
+        <div class="sec">📍 Address Details / पता विवरण</div>
+        <div class="row">
+          <div class="fg"><label for="state">State / राज्य <span class="r">*</span></label><select id="state">
+              <option value="">— Select State —</option>
+              <option value="andhra_pradesh">Andhra Pradesh</option>
+              <option value="bihar">Bihar</option>
+              <option value="gujarat">Gujarat</option>
+              <option value="haryana">Haryana</option>
+              <option value="karnataka">Karnataka</option>
+              <option value="madhya_pradesh">Madhya Pradesh</option>
+              <option value="maharashtra">Maharashtra</option>
+              <option value="rajasthan">Rajasthan</option>
+              <option value="telangana">Telangana</option>
+              <option value="uttar_pradesh">Uttar Pradesh</option>
+              <option value="west_bengal">West Bengal</option>
+            </select></div>
+          <div class="fg"><label for="district">District / जिला <span class="r">*</span></label><input type="text"
+              id="district" placeholder="Enter district"></div>
+        </div>
+        <div class="row">
+          <div class="fg"><label for="village">Village / गाँव <span class="r">*</span></label><input type="text"
+              id="village" placeholder="Enter village name"></div>
+          <div class="fg"><label for="pincode">PIN Code <span class="r">*</span></label><input type="text" id="pincode"
+              placeholder="6-digit PIN" maxlength="6"></div>
+        </div>
+        <div class="sec">🌾 Land Details / भूमि विवरण</div>
+        <div class="row">
+          <div class="fg"><label for="land_area">Land Area (Acres) <span class="r">*</span></label><input type="text"
+              id="land_area" placeholder="e.g. 2.5"></div>
+          <div class="fg"><label for="survey_number">Survey / Khasra Number <span class="r">*</span></label><input
+              type="text" id="survey_number" placeholder="Enter survey number"></div>
+        </div>
+        <div class="sec">🏦 Bank Details / बैंक विवरण</div>
+        <div class="row">
+          <div class="fg"><label for="account_number">Account Number <span class="r">*</span></label><input type="text"
+              id="account_number" placeholder="Enter account number"></div>
+          <div class="fg"><label for="ifsc">IFSC Code <span class="r">*</span></label><input type="text" id="ifsc"
+              placeholder="e.g. SBIN0001234"></div>
+        </div>
+        <div class="row full">
+          <div class="fg"><label for="bank_name">Bank Name <span class="r">*</span></label><input type="text"
+              id="bank_name" placeholder="e.g. State Bank of India"></div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <button class="btn-reset" onclick="resetForm()">↺ Reset</button>
+        <button class="btn-sub" id="submit-btn" onclick="submitForm()">Submit Application →</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const D = { full_name: "Ramesh Kumar Singh", gender: "male", dob: "15/03/1978", category: "obc", aadhaar: "4567 8901 2345", mobile: "+91 98765 43210", state: "uttar_pradesh", district: "Varanasi", village: "Rampur Kalan", pincode: "221001", land_area: "3.5", survey_number: "KH/142/2023", account_number: "31290481673", ifsc: "SBIN0001234", bank_name: "State Bank of India" };
+
+    const LOGS = [['lc-t', '08:42:31'], ['lc-m', '[rpa] Chrome(headless=False) initialised'], ['lc-ok', '[✓] session_id='], ['lc-v', '4f8a9c2e1b'], ['lc-m', '[rpa] GET http://localhost:3000/pm_kisan.html'], ['lc-ok', '[✓] DOMContentLoaded · 15 fields mapped'], ['lc-m', '[rpa] injecting farmer_state uid='], ['lc-v', 'usr_9182'], ['lc-ok', '[✓] typing: '], ['lc-v', 'Ramesh Kumar Singh'], ['lc-m', '[rpa] select_by_value("state","uttar_pradesh")'], ['lc-ok', '[✓] IFSC validated: '], ['lc-v', 'SBIN0001234'], ['lc-m', '[rpa] click(#submit-btn)'], ['lc-ok', '[✓] ref_id captured: '], ['lc-v', 'PMKISAN7281934'], ['lc-ok', '[✓] stored → Firebase /applications/usr_9182']];
+    let li = 0;
+    function pushLog(txt, cls) { const ls = document.querySelectorAll('.ll'); ls[0].innerHTML = ls[1].innerHTML; ls[0].className = ls[1].className; ls[1].innerHTML = ls[2].innerHTML; ls[1].className = ls[2].className; ls[2].innerHTML = `<span class="${cls}">${txt}</span>`; ls[2].className = 'll on'; setTimeout(() => ls[0].classList.add('on'), 50); }
+    function nlog() { if (li >= LOGS.length) li = 0; const [c, t] = LOGS[li++]; pushLog(t, c); }
+
+    const STEPS = [{ id: 's1', p: 14 }, { id: 's2', p: 28 }, { id: 's3', p: 44 }, { id: 's4', p: 58 }, { id: 's5', p: 72 }, { id: 's6', p: 88 }, { id: 's7', p: 100 }];
+    function ss(i, state) { const el = document.getElementById(STEPS[i].id); const tg = el.querySelector('.rs-tag'); el.classList.remove('vis', 'run', 'ok'); if (state === 'run') { el.classList.add('vis', 'run'); tg.textContent = 'running'; } else if (state === 'ok') { el.classList.add('vis', 'ok'); tg.textContent = 'done'; } else { el.classList.add('vis'); tg.textContent = 'pending'; } document.getElementById('prog-fill').style.width = STEPS[i].p + '%'; }
+
+    const cur = document.getElementById('rpa-cursor'), tr = document.getElementById('rpa-trail');
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    function moveTo(x, y) { return new Promise(res => { const sx = parseFloat(cur.style.left) || window.innerWidth / 2, sy = parseFloat(cur.style.top) || window.innerHeight / 2; const N = 22; let i = 0; const iv = setInterval(() => { i++; const t = i / N, e = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t; const cx = sx + (x - sx) * e, cy = sy + (y - sy) * e; cur.style.left = cx + 'px'; cur.style.top = cy + 'px'; tr.style.left = cx + 'px'; tr.style.top = cy + 'px'; if (i >= N) { clearInterval(iv); res(); } }, 16); }); }
+
+    async function fillField(id, val, isSel = false) { const el = document.getElementById(id); if (!el) return; el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); await sleep(110); const r = el.getBoundingClientRect(); await moveTo(r.left + r.width / 2, r.top + r.height / 2); cur.classList.add('click'); await sleep(110); cur.classList.remove('click'); el.classList.add('f-active'); el.focus(); if (isSel) { el.value = val; el.dispatchEvent(new Event('change')); await sleep(260); } else { el.value = ''; for (const c of String(val)) { el.value += c; await sleep(26 + Math.random() * 16); } await sleep(180); } el.classList.remove('f-active'); }
+
+    function show(id) { document.getElementById(id).classList.add('active'); }
+    function hide(id) { document.getElementById(id).classList.remove('active'); }
+
+    async function startDemo() {
+      show('rpa-overlay');
+      document.getElementById('rpa-view-btn').style.display = 'none';
+      STEPS.forEach((_, i) => { const el = document.getElementById(STEPS[i].id); el.classList.remove('vis', 'run', 'ok'); el.querySelector('.rs-tag').textContent = 'pending'; });
+      document.getElementById('prog-fill').style.width = '0%';
+      const lt = setInterval(nlog, 520);
+
+      ss(0, 'run'); await sleep(1000); ss(0, 'ok');
+      ss(1, 'run'); await sleep(850); ss(1, 'ok');
+
+      hide('rpa-overlay');
+      cur.style.display = 'block'; tr.style.display = 'block';
+      cur.style.left = (window.innerWidth / 2) + 'px'; cur.style.top = (window.innerHeight / 2) + 'px';
+
+      show('rpa-overlay'); ss(2, 'run'); await sleep(350); hide('rpa-overlay');
+      await fillField('full_name', D.full_name);
+      await fillField('gender', D.gender, true);
+      await fillField('dob', D.dob);
+      await fillField('category', D.category, true);
+      show('rpa-overlay'); ss(2, 'ok');
+
+      ss(3, 'run'); await sleep(300); hide('rpa-overlay');
+      await fillField('aadhaar', D.aadhaar);
+      await fillField('mobile', D.mobile);
+      show('rpa-overlay'); ss(3, 'ok');
+
+      ss(4, 'run'); await sleep(300); hide('rpa-overlay');
+      await fillField('state', D.state, true);
+      await fillField('district', D.district);
+      await fillField('village', D.village);
+      await fillField('pincode', D.pincode);
+      await fillField('land_area', D.land_area);
+      await fillField('survey_number', D.survey_number);
+      show('rpa-overlay'); ss(4, 'ok');
+
+      ss(5, 'run'); await sleep(300); hide('rpa-overlay');
+      await fillField('account_number', D.account_number);
+      await fillField('ifsc', D.ifsc);
+      await fillField('bank_name', D.bank_name);
+      show('rpa-overlay'); ss(5, 'ok');
+
+      ss(6, 'run'); await sleep(500); hide('rpa-overlay');
+      const btn = document.getElementById('submit-btn');
+      const br = btn.getBoundingClientRect();
+      await moveTo(br.left + br.width / 2, br.top + br.height / 2);
+      cur.classList.add('click'); await sleep(150); cur.classList.remove('click');
+      await sleep(300);
+      const rid = 'PMKISAN' + Math.floor(Math.random() * 9000000 + 1000000);
+      showSuccess(rid);
+      show('rpa-overlay'); ss(6, 'ok');
+      clearInterval(lt);
+      pushLog('[✓] application_id stored → Firestore', 'lc-ok');
+      document.getElementById('rpa-view-btn').style.display = 'block';
+      cur.style.display = 'none'; tr.style.display = 'none';
+    }
+
+    function closeRPA() { hide('rpa-overlay'); }
+    function showSuccess(id) { document.getElementById('ref-id').textContent = id; document.getElementById('success').classList.add('on'); document.getElementById('success').scrollIntoView({ behavior: 'smooth' }); }
+    function verifyOTP() { const v = document.getElementById('aadhaar').value.replace(/\s/g, ''); alert(v.length === 12 ? 'OTP sent to linked mobile.\n(Demo: use 123456)' : 'Enter valid 12-digit Aadhaar.'); }
+    function submitForm() { const req = ['full_name', 'gender', 'dob', 'aadhaar', 'mobile', 'state', 'district', 'village', 'pincode', 'land_area', 'survey_number', 'account_number', 'ifsc', 'bank_name']; const miss = req.filter(id => !document.getElementById(id).value.trim()); if (miss.length) { document.getElementById(miss[0]).focus(); alert('Missing: ' + miss.join(', ')); return; } showSuccess('PMKISAN' + Math.floor(Math.random() * 9000000 + 1000000)); }
+    function resetForm() { document.querySelectorAll('input,select').forEach(el => el.tagName === 'SELECT' ? el.selectedIndex = 0 : el.value = ''); document.getElementById('success').classList.remove('on'); }
+
+    window.addEventListener('DOMContentLoaded', () => { if (new URLSearchParams(location.search).get('demo') === 'true') setTimeout(startDemo, 700); });
+  </script>
+</body>
+
+</html>

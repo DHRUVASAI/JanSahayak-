@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PM-JAY Portal | Ayushman Bharat Enrollment</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; font-size: 14px; }
+
+  /* ══ DEMO OVERLAY ══ */
+  #demo-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center; }
+  #demo-overlay.active { display:flex; }
+  #demo-panel { background:#fff; border-radius:8px; padding:0; max-width:420px; width:92%; box-shadow:0 20px 60px rgba(0,0,0,0.3); overflow:hidden; }
+  #demo-panel-header { background:#0f6b3a; padding:20px 24px; }
+  #demo-panel-header h2 { color:#fff; font-size:1.05rem; font-weight:700; margin-bottom:4px; }
+  #demo-panel-header p { color:rgba(255,255,255,0.75); font-size:0.78rem; }
+  #demo-panel-body { padding:20px 24px; }
+  .progress-meta { display:flex; justify-content:space-between; font-size:11px; color:#666; margin-bottom:6px; }
+  #progress-pct { color:#0f6b3a; font-weight:700; }
+  #demo-progress { height:5px; background:#e9ecef; border-radius:3px; overflow:hidden; margin-bottom:18px; }
+  #demo-progress-bar { height:100%; width:0%; background:linear-gradient(90deg,#0f6b3a,#28a745); transition:width 0.5s ease; border-radius:3px; }
+  #demo-steps { display:flex; flex-direction:column; gap:2px; }
+  .demo-step { display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:5px; opacity:0; transform:translateY(4px); transition:all 0.3s ease; font-size:0.82rem; color:#666; }
+  .demo-step.visible { opacity:1; transform:translateY(0); }
+  .demo-step.active { background:#d4edda; color:#0f6b3a; font-weight:600; }
+  .demo-step.done { opacity:0.5; }
+  .step-dot { width:18px; height:18px; border-radius:50%; border:2px solid #ced4da; display:flex; align-items:center; justify-content:center; font-size:9px; flex-shrink:0; }
+  .demo-step.active .step-dot { border-color:#0f6b3a; background:#0f6b3a; color:#fff; }
+  .demo-step.done .step-dot { border-color:#28a745; background:#28a745; color:#fff; }
+  #demo-panel-footer { padding:14px 24px 18px; border-top:1px solid #e9ecef; display:flex; justify-content:space-between; align-items:center; }
+  #demo-ref-display { font-size:11px; color:#666; display:none; }
+  #demo-ref-display span { color:#0f6b3a; font-weight:700; }
+  #demo-close-btn { display:none; background:#0f6b3a; color:#fff; border:none; padding:8px 18px; border-radius:5px; cursor:pointer; font-size:0.82rem; font-weight:600; }
+
+  /* ══ RPA CURSOR ══ */
+  #rpa-cursor { position:fixed; pointer-events:none; z-index:10000; display:none; }
+  #rpa-cursor svg { filter:drop-shadow(0 2px 6px rgba(15,107,58,0.5)); }
+  #rpa-cursor-label { position:fixed; background:#0f6b3a; color:#fff; font-size:10px; font-weight:700; padding:3px 8px; border-radius:4px; pointer-events:none; z-index:10001; display:none; white-space:nowrap; }
+  .field-highlight { outline:2px solid #0f6b3a !important; outline-offset:1px; background:#d4edda !important; }
+
+  /* ══ PORTAL ══ */
+  #gov-bar { background:#003366; color:#fff; text-align:center; padding:6px; font-size:0.72rem; letter-spacing:0.5px; }
+  #header { background:#fff; border-bottom:3px solid #ff9900; padding:10px 24px; display:flex; align-items:center; gap:14px; }
+  #header-logo { width:52px; height:52px; background:#0f6b3a; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.4rem; flex-shrink:0; }
+  #header-text h1 { color:#0f6b3a; font-size:1.1rem; font-weight:700; }
+  #header-text p { color:#555; font-size:0.75rem; }
+  #header-text .sub { color:#888; font-size:0.7rem; }
+  .coverage-pill { margin-left:12px; background:#d4edda; border:1px solid #a3cfbb; border-radius:20px; padding:4px 12px; font-size:0.75rem; font-weight:700; color:#0f6b3a; }
+  .tricolor-bar { display:flex; flex-direction:column; margin-left:auto; width:38px; border:1px solid #ddd; border-radius:2px; overflow:hidden; }
+  .tricolor-bar div { height:8px; }
+  .tricolor-bar .s { background:#FF9933; }
+  .tricolor-bar .w { background:#fff; display:flex; align-items:center; justify-content:center; font-size:5px; color:#000080; }
+  .tricolor-bar .g { background:#138808; }
+  nav { background:#0f5c32; display:flex; }
+  nav a { color:#ccc; padding:11px 18px; text-decoration:none; font-size:0.82rem; transition:background 0.2s; }
+  nav a:hover, nav a.active { background:#ff9900; color:#fff; }
+  #demo-banner { background:#d4edda; border-bottom:1px solid #a3cfbb; padding:8px 24px; display:flex; align-items:center; gap:10px; font-size:0.8rem; color:#0a3622; }
+  #demo-banner button { margin-left:auto; background:#0f6b3a; color:#fff; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; font-size:0.78rem; font-weight:600; }
+
+  /* Coverage banner */
+  .coverage-banner { background:linear-gradient(135deg,#0f6b3a,#1a8c4e); color:#fff; padding:14px 24px; display:flex; align-items:center; gap:20px; margin-bottom:18px; border-radius:6px; }
+  .cov-amount { font-size:1.8rem; font-weight:800; }
+  .cov-label { font-size:0.75rem; opacity:0.8; }
+  .cov-features { display:flex; gap:12px; margin-left:auto; flex-wrap:wrap; }
+  .cov-feat { background:rgba(255,255,255,0.15); border-radius:4px; padding:4px 10px; font-size:0.72rem; }
+
+  main { max-width:860px; margin:20px auto; padding:0 16px 50px; }
+  .breadcrumb { font-size:0.75rem; color:#666; margin-bottom:14px; }
+  .breadcrumb a { color:#0f6b3a; text-decoration:none; }
+
+  .form-card { background:#fff; border-radius:6px; overflow:hidden; box-shadow:0 1px 8px rgba(0,0,0,0.08); }
+  .form-header { background:linear-gradient(135deg,#0f6b3a,#1a8c4e); color:#fff; padding:18px 24px; display:flex; align-items:center; gap:12px; }
+  .form-header-icon { width:44px; height:44px; background:rgba(255,255,255,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; }
+  .form-header h2 { font-size:1.05rem; font-weight:700; }
+  .form-header p { font-size:0.75rem; opacity:0.8; margin-top:2px; }
+  .alert-info { background:#d4edda; border-left:4px solid #28a745; padding:10px 18px; font-size:0.8rem; color:#0a3622; display:flex; gap:8px; }
+
+  .form-body { padding:22px 24px; }
+  .section-title { font-size:0.78rem; font-weight:700; letter-spacing:0.8px; color:#0f6b3a; border-bottom:2px solid #ff9900; padding-bottom:6px; margin:22px 0 16px; text-transform:uppercase; display:flex; align-items:center; gap:8px; }
+  .section-title:first-child { margin-top:0; }
+  .section-num { background:#0f6b3a; color:#fff; font-size:10px; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px; }
+  .form-row.single { grid-template-columns:1fr; }
+  .form-row.triple { grid-template-columns:1fr 1fr 1fr; }
+  .form-group { display:flex; flex-direction:column; gap:5px; }
+  label { font-size:0.78rem; font-weight:600; color:#333; }
+  label .req { color:#dc3545; }
+  input, select, textarea { padding:9px 11px; border:1px solid #ced4da; border-radius:4px; font-size:0.88rem; color:#333; background:#fff; width:100%; transition:border-color 0.2s, box-shadow 0.2s; font-family:inherit; }
+  select option { background:#fff; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:#0f6b3a; box-shadow:0 0 0 3px rgba(15,107,58,0.12); }
+  input::placeholder { color:#aaa; font-size:0.83rem; }
+  .input-group { display:flex; }
+  .input-group input { border-radius:4px 0 0 4px; }
+  .btn-verify { background:#0f5c32; color:#fff; border:none; padding:9px 12px; border-radius:0 4px 4px 0; cursor:pointer; font-size:0.75rem; font-weight:600; white-space:nowrap; }
+  .field-hint { font-size:0.7rem; color:#888; }
+  .checkbox-wrap { display:flex; align-items:flex-start; gap:10px; padding:12px; background:#f8f9fa; border:1px solid #ced4da; border-radius:4px; }
+  .checkbox-wrap input[type=checkbox] { width:16px; height:16px; margin-top:2px; flex-shrink:0; accent-color:#0f6b3a; }
+  .checkbox-wrap label { font-size:0.8rem; color:#333; font-weight:400; }
+
+  #success-banner { display:none; background:#d1e7dd; border:1px solid #a3cfbb; border-radius:6px; padding:16px 20px; margin-bottom:18px; }
+  #success-banner.show { display:flex; align-items:center; gap:14px; }
+  .suc-icon { width:38px; height:38px; background:#0f6b3a; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:#fff; flex-shrink:0; }
+  .suc-text h3 { color:#0a3622; font-size:0.9rem; font-weight:700; margin-bottom:3px; }
+  .suc-text p { color:#145a32; font-size:0.78rem; }
+  .suc-ref { font-size:0.85rem; font-weight:700; color:#0f6b3a; background:#c3e6cb; padding:2px 8px; border-radius:4px; display:inline-block; margin-top:4px; }
+
+  .form-footer { padding:16px 24px; background:#f8f9fa; border-top:1px solid #e9ecef; display:flex; justify-content:space-between; align-items:center; }
+  .btn-reset { background:#fff; color:#666; border:1px solid #ced4da; padding:9px 18px; border-radius:4px; cursor:pointer; font-size:0.85rem; }
+  .btn-submit { background:linear-gradient(135deg,#0f6b3a,#1a8c4e); color:#fff; border:none; padding:10px 28px; border-radius:4px; font-size:0.9rem; font-weight:700; cursor:pointer; box-shadow:0 3px 10px rgba(15,107,58,0.25); transition:transform 0.1s, box-shadow 0.2s; }
+  .btn-submit:hover { transform:translateY(-1px); box-shadow:0 5px 14px rgba(15,107,58,0.35); }
+
+  @media(max-width:600px){ .form-row,.form-row.triple{grid-template-columns:1fr} .cov-features{display:none} }
+</style>
+</head>
+<body>
+
+<div id="rpa-cursor">
+  <svg width="18" height="22" viewBox="0 0 18 22" fill="none">
+    <path d="M1 1L1 18L5.5 13.5L8.5 21L11 20L8 12.5L14 12.5Z" fill="white" stroke="#0f6b3a" stroke-width="1.2" stroke-linejoin="round"/>
+  </svg>
+</div>
+<div id="rpa-cursor-label"></div>
+
+<div id="demo-overlay">
+  <div id="demo-panel">
+    <div id="demo-panel-header">
+      <h2>🤖 JanSahayak RPA Agent</h2>
+      <p>Auto-filling Ayushman Bharat form from WhatsApp conversation</p>
+    </div>
+    <div id="demo-panel-body">
+      <div class="progress-meta"><span>Progress</span><span id="progress-pct">0%</span></div>
+      <div id="demo-progress"><div id="demo-progress-bar"></div></div>
+      <div id="demo-steps">
+        <div class="demo-step" id="s1"><div class="step-dot">1</div>Receiving data from WhatsApp bot</div>
+        <div class="demo-step" id="s2"><div class="step-dot">2</div>Verifying SECC eligibility</div>
+        <div class="demo-step" id="s3"><div class="step-dot">3</div>Opening PM-JAY portal</div>
+        <div class="demo-step" id="s4"><div class="step-dot">4</div>Filling beneficiary details</div>
+        <div class="demo-step" id="s5"><div class="step-dot">5</div>Entering family & health info</div>
+        <div class="demo-step" id="s6"><div class="step-dot">6</div>Submitting enrollment</div>
+        <div class="demo-step" id="s7"><div class="step-dot">7</div>Ayushman Card ID generated ✓</div>
+      </div>
+    </div>
+    <div id="demo-panel-footer">
+      <div id="demo-ref-display">Card ID: <span id="demo-ref-id">—</span></div>
+      <button id="demo-close-btn" onclick="closeDemo()">View Form →</button>
+    </div>
+  </div>
+</div>
+
+<div id="gov-bar">भारत सरकार | Government of India — National Health Authority | PM-JAY</div>
+<div id="header">
+  <div id="header-logo">🏥</div>
+  <div id="header-text">
+    <h1>Ayushman Bharat — PM-JAY Portal</h1>
+    <p>Pradhan Mantri Jan Arogya Yojana <span class="coverage-pill">₹5 Lakh Coverage</span></p>
+    <div class="sub">प्रधानमंत्री जन आरोग्य योजना — स्वास्थ्य बीमा</div>
+  </div>
+  <div class="tricolor-bar"><div class="s"></div><div class="w">●</div><div class="g"></div></div>
+</div>
+<nav>
+  <a href="#">Home</a>
+  <a href="#" class="active">New Enrollment</a>
+  <a href="#">Check Eligibility</a>
+  <a href="#">Empanelled Hospitals</a>
+  <a href="#">Contact Us</a>
+</nav>
+<div id="demo-banner">
+  <span>⚡</span>
+  <span><strong>Demo Mode</strong> — JanSahayak will auto-fill this form using WhatsApp conversation data</span>
+  <button onclick="startDemo()">▶ Run Demo</button>
+</div>
+
+<main>
+  <div class="breadcrumb"><a href="#">Home</a> › <a href="#">Beneficiary Services</a> › <strong>New Enrollment</strong></div>
+
+  <div class="coverage-banner">
+    <div>
+      <div class="cov-amount">₹5 Lakh</div>
+      <div class="cov-label">Annual health cover per family</div>
+    </div>
+    <div class="cov-features">
+      <div class="cov-feat">🏥 25,000+ Hospitals</div>
+      <div class="cov-feat">💊 Pre & Post Care</div>
+      <div class="cov-feat">🆓 Free Treatment</div>
+      <div class="cov-feat">🇮🇳 Pan India</div>
+    </div>
+  </div>
+
+  <div id="success-banner">
+    <div class="suc-icon">✓</div>
+    <div class="suc-text">
+      <h3>Enrollment Submitted Successfully!</h3>
+      <p>Ayushman Card will be issued within 15 working days</p>
+      <div class="suc-ref" id="success-ref">—</div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-header">
+      <div class="form-header-icon">🏥</div>
+      <div>
+        <h2>Ayushman Bharat Enrollment Form</h2>
+        <p>आयुष्मान भारत नामांकन | Please fill all mandatory fields marked with *</p>
+      </div>
+    </div>
+    <div class="alert-info">
+      <span>✅</span>
+      <span><strong>Eligibility:</strong> BPL families and SECC-listed households are eligible. Aadhaar verification is mandatory for enrollment.</span>
+    </div>
+    <div class="form-body">
+
+      <div class="section-title"><span class="section-num">1</span> BENEFICIARY DETAILS / लाभार्थी विवरण</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="full_name">Full Name (as per Aadhaar) <span class="req">*</span></label>
+          <input type="text" id="full_name" placeholder="Enter full name">
+        </div>
+        <div class="form-group">
+          <label for="gender">Gender / लिंग <span class="req">*</span></label>
+          <select id="gender"><option value="">-- Select --</option><option value="female">Female / महिला</option><option value="male">Male / पुरुष</option><option value="other">Other / अन्य</option></select>
+        </div>
+      </div>
+      <div class="form-row triple">
+        <div class="form-group">
+          <label for="dob">Date of Birth <span class="req">*</span></label>
+          <input type="text" id="dob" placeholder="DD/MM/YYYY">
+        </div>
+        <div class="form-group">
+          <label for="age">Age</label>
+          <input type="number" id="age" placeholder="e.g. 45">
+        </div>
+        <div class="form-group">
+          <label for="category">Social Category <span class="req">*</span></label>
+          <select id="category"><option value="">-- Select --</option><option value="general">General</option><option value="sc">SC</option><option value="st">ST</option><option value="obc">OBC</option></select>
+        </div>
+      </div>
+
+      <div class="section-title"><span class="section-num">2</span> AADHAAR & CONTACT / आधार और संपर्क</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="aadhaar">Aadhaar Number <span class="req">*</span></label>
+          <div class="input-group">
+            <input type="text" id="aadhaar" placeholder="XXXX XXXX XXXX" maxlength="14">
+            <button class="btn-verify" onclick="verifyOTP()">Verify OTP</button>
+          </div>
+          <span class="field-hint">12-digit Aadhaar number</span>
+        </div>
+        <div class="form-group">
+          <label for="mobile">Mobile Number <span class="req">*</span></label>
+          <input type="text" id="mobile" placeholder="+91 XXXXX XXXXX">
+        </div>
+      </div>
+
+      <div class="section-title"><span class="section-num">3</span> FAMILY & INCOME / परिवार और आय</div>
+      <div class="form-row triple">
+        <div class="form-group">
+          <label for="family_size">Family Size <span class="req">*</span></label>
+          <input type="number" id="family_size" placeholder="Total members" min="1">
+        </div>
+        <div class="form-group">
+          <label for="annual_income">Annual Income (₹) <span class="req">*</span></label>
+          <input type="text" id="annual_income" placeholder="e.g. 80000">
+        </div>
+        <div class="form-group">
+          <label for="ration_card">Ration Card No.</label>
+          <input type="text" id="ration_card" placeholder="If available">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="secc_id">SECC ID (if available)</label>
+          <input type="text" id="secc_id" placeholder="Enter SECC ID">
+        </div>
+        <div class="form-group">
+          <label for="disability">Disability Status</label>
+          <select id="disability"><option value="none">None</option><option value="physical">Physical</option><option value="visual">Visual</option><option value="hearing">Hearing</option><option value="other">Other</option></select>
+        </div>
+      </div>
+
+      <div class="section-title"><span class="section-num">4</span> ADDRESS DETAILS / पता विवरण</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="state">State / राज्य <span class="req">*</span></label>
+          <select id="state">
+            <option value="">-- Select State --</option>
+            <option value="andhra_pradesh">Andhra Pradesh</option>
+            <option value="bihar">Bihar</option>
+            <option value="gujarat">Gujarat</option>
+            <option value="haryana">Haryana</option>
+            <option value="karnataka">Karnataka</option>
+            <option value="madhya_pradesh">Madhya Pradesh</option>
+            <option value="maharashtra">Maharashtra</option>
+            <option value="rajasthan">Rajasthan</option>
+            <option value="telangana">Telangana</option>
+            <option value="uttar_pradesh">Uttar Pradesh</option>
+            <option value="west_bengal">West Bengal</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="district">District / जिला <span class="req">*</span></label>
+          <input type="text" id="district" placeholder="Enter district">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="village">Village / Ward <span class="req">*</span></label>
+          <input type="text" id="village" placeholder="Enter village or ward name">
+        </div>
+        <div class="form-group">
+          <label for="pincode">PIN Code <span class="req">*</span></label>
+          <input type="text" id="pincode" placeholder="6-digit PIN" maxlength="6">
+        </div>
+      </div>
+
+      <div class="section-title"><span class="section-num">5</span> HEALTH DETAILS / स्वास्थ्य विवरण</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="blood_group">Blood Group</label>
+          <select id="blood_group"><option value="">-- Select --</option><option value="a+">A+</option><option value="a-">A-</option><option value="b+">B+</option><option value="b-">B-</option><option value="ab+">AB+</option><option value="ab-">AB-</option><option value="o+">O+</option><option value="o-">O-</option></select>
+        </div>
+        <div class="form-group">
+          <label for="existing_conditions">Pre-existing Conditions</label>
+          <input type="text" id="existing_conditions" placeholder="e.g. Diabetes, None">
+        </div>
+      </div>
+      <div class="form-row single">
+        <div class="checkbox-wrap">
+          <input type="checkbox" id="declaration">
+          <label for="declaration">I hereby declare that all the information provided is true and correct. I understand that providing false information may lead to cancellation of Ayushman Bharat benefits and legal action.</label>
+        </div>
+      </div>
+
+    </div>
+    <div class="form-footer">
+      <button class="btn-reset" onclick="resetForm()">↺ Reset</button>
+      <button class="btn-submit" id="submit-btn" onclick="submitForm()">Submit Enrollment →</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const DD = {
+  full_name:'Ramesh Kumar Singh', gender:'male', dob:'15/03/1978', age:'47',
+  category:'obc', aadhaar:'4567 8901 2345', mobile:'+91 98765 43210',
+  family_size:'4', annual_income:'72000', disability:'none',
+  state:'uttar_pradesh', district:'Varanasi', village:'Rampur Kalan',
+  pincode:'221001', blood_group:'b+', existing_conditions:'None'
+};
+const STEPS=[
+  {id:'s1',p:14,d:900},{id:'s2',p:28,d:1000},{id:'s3',p:42,d:700},
+  {id:'s4',p:60,d:200},{id:'s5',p:80,d:200},{id:'s6',p:94,d:1400},{id:'s7',p:100,d:600}
+];
+const cur=document.getElementById('rpa-cursor'),curL=document.getElementById('rpa-cursor-label');
+window.addEventListener('DOMContentLoaded',()=>{ if(new URLSearchParams(location.search).get('demo')==='true') setTimeout(startDemo,700); });
+async function startDemo(){
+  document.getElementById('demo-overlay').classList.add('active');
+  const bar=document.getElementById('demo-progress-bar'),pct=document.getElementById('progress-pct');
+  for(let i=0;i<STEPS.length;i++){
+    const s=STEPS[i],el=document.getElementById(s.id);
+    if(i>0){const p=document.getElementById(STEPS[i-1].id);p.classList.remove('active');p.classList.add('done');p.querySelector('.step-dot').textContent='✓';}
+    el.classList.add('visible','active'); bar.style.width=s.p+'%'; pct.textContent=s.p+'%';
+    await sleep(s.d);
+  }
+  const ref='AB2025'+Math.floor(Math.random()*9000000+1000000);
+  document.getElementById('demo-ref-id').textContent=ref;
+  document.getElementById('demo-ref-display').style.display='block';
+  document.getElementById('demo-close-btn').style.display='inline-block';
+  await sleep(400); closeDemo(); await sleep(200); cur.style.display='block'; curL.style.display='block';
+  await runFill(ref);
+}
+function closeDemo(){ document.getElementById('demo-overlay').classList.remove('active'); cur.style.display='none'; curL.style.display='none'; }
+async function runFill(ref){
+  const fields=[
+    {id:'full_name',v:DD.full_name,t:'i'},{id:'gender',v:DD.gender,t:'s'},
+    {id:'dob',v:DD.dob,t:'i'},{id:'age',v:DD.age,t:'i'},
+    {id:'category',v:DD.category,t:'s'},{id:'aadhaar',v:DD.aadhaar,t:'i'},
+    {id:'mobile',v:DD.mobile,t:'i'},{id:'family_size',v:DD.family_size,t:'i'},
+    {id:'annual_income',v:DD.annual_income,t:'i'},{id:'disability',v:DD.disability,t:'s'},
+    {id:'state',v:DD.state,t:'s'},{id:'district',v:DD.district,t:'i'},
+    {id:'village',v:DD.village,t:'i'},{id:'pincode',v:DD.pincode,t:'i'},
+    {id:'blood_group',v:DD.blood_group,t:'s'},{id:'existing_conditions',v:DD.existing_conditions,t:'i'}
+  ];
+  for(const f of fields){
+    const el=document.getElementById(f.id); if(!el) continue;
+    el.scrollIntoView({behavior:'smooth',block:'center'}); await sleep(80);
+    const r=el.getBoundingClientRect();
+    await moveCursor(r.left+r.width/2,r.top+r.height/2,f.id);
+    el.classList.add('field-highlight'); el.focus();
+    if(f.t==='s'){el.value=f.v;}
+    else{el.value='';for(const c of f.v){el.value+=c;await sleep(30+Math.random()*20);}}
+    await sleep(150); el.classList.remove('field-highlight');
+  }
+  const btn=document.getElementById('submit-btn');
+  btn.scrollIntoView({behavior:'smooth',block:'center'}); await sleep(200);
+  const br=btn.getBoundingClientRect();
+  await moveCursor(br.left+br.width/2,br.top+br.height/2,'Submit'); await sleep(300);
+  cur.style.display='none'; curL.style.display='none'; showSuccess(ref);
+}
+function moveCursor(tx,ty,label){
+  return new Promise(res=>{
+    const sx=parseFloat(cur.style.left)||window.innerWidth/2,sy=parseFloat(cur.style.top)||200;
+    const steps=20; let s=0; curL.textContent=label;
+    const iv=setInterval(()=>{ s++; const t=s/steps,e=t<0.5?2*t*t:-1+(4-2*t)*t;
+      const cx=sx+(tx-sx)*e,cy=sy+(ty-sy)*e;
+      cur.style.left=cx+'px'; cur.style.top=cy+'px';
+      curL.style.left=(cx+18)+'px'; curL.style.top=(cy-6)+'px';
+      if(s>=steps){clearInterval(iv);res();}
+    },16);
+  });
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function showSuccess(ref){ const b=document.getElementById('success-banner'); document.getElementById('success-ref').textContent=ref; b.classList.add('show'); b.scrollIntoView({behavior:'smooth'}); }
+function verifyOTP(){ const v=document.getElementById('aadhaar').value.replace(/\s/g,''); alert(v.length===12?'OTP sent to registered mobile.\n(Demo: use 123456)':'Please enter valid 12-digit Aadhaar.'); }
+function submitForm(){
+  if(!document.getElementById('declaration').checked){alert('Please accept the declaration to proceed.');return;}
+  const req=['full_name','gender','dob','category','aadhaar','mobile','family_size','annual_income','state','district','village','pincode'];
+  const miss=req.filter(id=>!document.getElementById(id).value.trim());
+  if(miss.length){document.getElementById(miss[0]).focus();alert('Missing fields: '+miss.join(', '));return;}
+  showSuccess('AB2025'+Math.floor(Math.random()*9000000+1000000));
+}
+function resetForm(){
+  document.querySelectorAll('input,select').forEach(el=>{
+    if(el.type==='checkbox')el.checked=false;
+    else if(el.tagName==='SELECT')el.selectedIndex=0;
+    else el.value='';
+  });
+  document.getElementById('success-banner').classList.remove('show');
+}
+</script>
+</body>
+</html>
